@@ -19,4 +19,27 @@ ftmtree[ftmtree$YrFireName=="2004 - Parks" & ftmtree$Plot=="18B" & ftmtree$TreeN
 ftmtree[ftmtree$YrFireName=="2007 - Neola North" & ftmtree$Plot=="28" & ftmtree$TreeNum=="220",]$DBH_cm <- 75.692 
 ftmtree[ftmtree$YrFireName=="2007 - Neola North" & ftmtree$Plot=="28" & ftmtree$TreeNum=="222",]$DBH_cm <- 41.91 
 
+
+## replace Neola trees with Plot ID
+
+hoodtree41 <- read.csv("VP/severity_tmp/data/original/FTM/Data/SharonHood/FTM_trees_corrected_Neolaonly.csv")
+
+head(hoodtree41)
+
+hoodtree41$Plot <- hoodtree41$fullID
+hoodtree41$fullID <- NULL
+
+ftmtree <- ftmtree[ftmtree$YrFireName != "2007 - Neola North",]
+ftmtree <- rbind(ftmtree, hoodtree41)
+
 write.csv(ftmtree, "VP/severity_tmp/data/original/FTM/Data/FTM_trees2.csv")
+
+
+# get Neola data for 
+
+head(hoodtree41)
+length(unique(hoodtree41$fullID))
+
+hoodcoord4 <- read.csv("VP/severity_tmp/data/original/FTM/Data/SharonHood/Neola_PIPO_PlotLocations_corrected.csv")
+
+
