@@ -195,6 +195,10 @@ nrow(hood[!is.na(hood$lat_wgs84),]) # 460 extra plots as of 10/25!
 # Fixed-area plot lodgepole plots 0.02 ha and ponderosa plots 0.04
 hoodtree4 <- ftmtree[ftmtree$YrFireName=="2007 - Neola North",]
 
+hoodtree41 <- read.csv("VP/severity_tmp/data/original/FTM/Data/SharonHood/FTM_trees_corrected_Neolaonly.csv")
+head(hoodtree41)
+length(unique(hoodtree41$fullID))
+
 hoodcoord4 <- read.csv("VP/severity_tmp/data/original/FTM/Data/SharonHood/Neola_PIPO_PlotLocations_corrected.csv")
 head(hoodcoord4)
 unique(hoodcoord4$YrFireName)
@@ -206,26 +210,23 @@ nrow(hood[hood$YrFireName=="2007 - Neola North",])
 head(hood4)
 head(hoodcoord4)
 
-# only merge latlon - the site matching needs to be figured out still
-# hoodcoord4_1 <- hoodcoord4[, c(3:4, 11:13)]
-head(hoodcoord4_1)
+
+# only merge latlon 
 
 unique(hood$Unit[hood$YrFireName %in% c("2007 - Neola North")])
-unique(hoodcoord4_1$Unit[hoodcoord4_1$YrFireName %in% c("2007 - Neola North")])
 
-hood <- merge(hood, hoodcoord4_1, by=c("YrFireName", "Unit", "Plot"), all.x=TRUE)
-head(hood)
+hood <- merge(hood, hoodcoord4[, c("FullID", "LAT_WGS84", "LONG_WGS84")], by.x="Plot", by.y="FullID", all.x=TRUE)
 
 
-hood$lat_wgs84 <- ifelse(!is.na(hood$latitude) & hood$YrFireName %in% c("2007 - Neola North"), hood$latitude, hood$lat_wgs84)
-hood$lon_wgs84 <- ifelse(!is.na(hood$longitude) & hood$YrFireName %in% c("2007 - Neola North"), hood$longitude, hood$lon_wgs84)
+hood$lat_wgs84 <- ifelse(!is.na(hood$LAT_WGS84) & hood$YrFireName %in% c("2007 - Neola North"), hood$LAT_WGS84, hood$lat_wgs84)
+hood$lon_wgs84 <- ifelse(!is.na(hood$LONG_WGS84) & hood$YrFireName %in% c("2007 - Neola North"), hood$LONG_WGS84, hood$lon_wgs84)
 
-hood$latitude <- NULL
-hood$longitude <- NULL
+hood$LAT_WGS84 <- NULL
+hood$LONG_WGS84 <- NULL
 
 summary(hood$lat_wgs84)
 
-nrow(hood[!is.na(hood$lat_wgs84),]) # 460 extra plots as of 10/25!
+nrow(hood[!is.na(hood$lat_wgs84),]) # 524 plots 
 
 
 ####################################################
@@ -290,21 +291,24 @@ hood$longitude <- NULL
 
 summary(hood$lat_wgs84)
 
-nrow(hood[!is.na(hood$lat_wgs84),]) # 497 extra plots as of 3/3/24!
+nrow(hood[!is.na(hood$lat_wgs84),]) # 561 extra plots as of 3/13/24!
 
 
 ####################################################
 ################## add BA loss ######################
 ####################################################
 names(hood)
-ftm_baloss <- read.csv("VP/severity_tmp/data/saved/FTM/FTM_ba.csv")
+ftm_baloss <- read.csv("VP/severity_tmp/data/saved/FTM/FTM_ba_v2.csv")
 names(ftm_baloss)
 
 hood <- hood[!is.na(hood$lat_wgs84),]
+length(hood[hood$YrFireName == "2002 - Rodeo",])
 
 hoodba <- merge(hood, ftm_baloss[, c("Plot", "YrFireName", "Dataset", "Unit", "ID", "pcnt_ba_mort")], 
                 by = c("Plot", "YrFireName", "Dataset", "Unit", "ID"))
-
+unique(hood$YrFireName)
+unique(hoodba$YrFireName)
+# 2002 - Rodeo is removed because it's variable radius; asking Sharon about the plot sizes for Mussigbrod, Tenderfoot Fall, and Tenderfoot Spring
 
 #hood$FireYear <- substr(hood$YrFireName, 1, 4)
 hoodba$utm_x <- NULL

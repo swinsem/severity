@@ -48,7 +48,7 @@ df_combined$pcnt_n_mort <- (df_combined$live_trees_ha_change / df_combined$live_
 df_combined$live_basal_area_change <- df_combined$basal_area_per_hectare.x - df_combined$basal_area_per_hectare.y
 df_combined$pcnt_ba_mort <- (df_combined$live_basal_area_change / df_combined$basal_area_per_hectare.x) * 100
 
-
+names(df_combined)
 # Keep only the necessary columns
 df_combined <- df_combined[, c("park.y", "plot_id.x", "uniqueplot", "years_since_burn.y", "plot_area_m.y",
                               "fireyear.y", "burn_class_1", "burn_class_2", "fire_type.y",

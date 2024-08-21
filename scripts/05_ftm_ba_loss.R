@@ -25,6 +25,7 @@ object_namef= paste0("severity/RDS-2020-0001-2/Data/FTM_fires.csv")
 ftmfire <- s3read_using(FUN = read.csv, bucket = bucket_name, object = object_namef)
 head(ftmfire)
 
+ftmfirehood <- ftmfire[ftmfire$Dataset %in% c("Hood", "Breece", "Cluck", "Davis", "Hood_Idaho", "Lerch", "Progar"),]
 
 # remove fires with no plot size or min tree size, get only fixed area plots, and later than 1992 (could adjust that)
 ftmfire_comp <- ftmfire[!is.na(ftmfire$Plot_size_ha),]
@@ -93,10 +94,16 @@ plot_summary2 <- plot_summary2 %>%
 plot_summary2$Plot_size_ha[plot_summary2$Plot_size_ha=="lodgepole plots 0.02 ha and ponderosa plots 0.04 ha" & plot_summary2$dominant_species=="Pinus_ponderosa"] <- "0.04"
 plot_summary2$Plot_size_ha[plot_summary2$Plot_size_ha=="lodgepole plots 0.02 ha and ponderosa plots 0.04 ha" & plot_summary2$dominant_species=="Pinus_contorta"] <- "0.02"
 
+# Tenderfoot plots - adjusting based on Unit - Table 2 in https://www.fs.usda.gov/rm/pubs/rmrs_gtr294.pdf
+plot_summary2$Plot_size_ha[plot_summary2$Plot_size_ha=="0.04 for even retention units; 0.027 for group retention units" & plot_summary2$Unit %in% c(1, 3, 10, 13)] <- "0.04"
+plot_summary2$Plot_size_ha[plot_summary2$Plot_size_ha=="0.04 for even retention units; 0.027 for group retention units" & plot_summary2$Unit %in% c(2, 4, 12, 16)] <- "0.027"
+
+# Add Mussigbrod plot distinctions
+
 # remove multiple size plots fires
 `%notin%` <- function(x, table) !(x %in% table)
 unique(plot_summary2$Plot_size_ha)
-plot_summary3 <- plot_summary2[plot_summary2$Plot_size_ha %notin% c("0.04 and 0.09", "0.04 for even retention units; 0.027 for group retention units", "0.06; three 0.2 ha subplots", "1 and 1.125", "0.2; four 0.4988 ha subplots"),]
+plot_summary3 <- plot_summary2[plot_summary2$Plot_size_ha %notin% c("0.04 and 0.09", "0.08, 0.04", "0.06; three 0.2 ha subplots", "1 and 1.125", "0.2; four 0.4988 ha subplots"),]
 # now that they're only single sizes, make numeric
 plot_summary3$Plot_size_ha <- as.numeric(plot_summary3$Plot_size_ha)
 

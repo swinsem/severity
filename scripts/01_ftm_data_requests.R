@@ -9,7 +9,7 @@ library(aws.s3)
 bucket_name="tmp-sara"
 object_name= paste0("severity/RDS-2020-0001-2/Data/FTM_trees.csv")
 #ftmtree <- s3read_using(FUN = read.csv, bucket = bucket_name, object = object_name)
-ftmtree <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_trees.csv") 
+ftmtree <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_trees2.csv") 
 
 head(ftmtree)
 names(ftmtree)
