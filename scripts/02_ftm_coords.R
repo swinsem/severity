@@ -378,7 +378,6 @@ unique(ftm_baloss[ftm_baloss$YrFireName %in% unique(harvey$YrFireName),]$YrFireN
 ftmtree_gunbarrel <- ftmtree[ftmtree$YrFireName=="2008 - Gunbarrel",]
 
 
-
 harvey <- harvey[!is.na(harvey$lat_wgs84),]
 
 harveyba <- merge(harvey, ftm_baloss[, c("Plot", "YrFireName", "Dataset", "Unit", "ID", "pcnt_ba_mort")], 
