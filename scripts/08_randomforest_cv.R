@@ -27,6 +27,28 @@ dd_cv$fold <- fire_to_fold[dd_cv$YrFireName]
 table(dd_cv$fold) # might be very uneven
 
 
+### spatial folds
+ard_for_task_v = ard |> 
+  spatialsample::spatial_clustering_cv(v = 10)
+
+ard_with_spatial_folds_v = ard_for_task_v |>
+  purrr::pmap(.f = function(id, splits) {
+    
+    spatial_fold <- id
+    assessment_data =
+      splits |>
+      rsample::assessment() |>
+      sf::st_drop_geometry()
+    
+    return(cbind(assessment_data, spatial_fold))
+  }) |>
+  data.table::rbindlist() |>
+  dplyr::mutate(spatial_fold = factor(spatial_fold)) |>
+  tibble::as_tibble()
+
+names(ard_with_spatial_folds_v)
+ard_for_cv <- ard_with_spatial_folds_v[,!names(ard_with_spatial_folds_v) %in% c("PlotID", "Dataset", "YrFireName")]
+
 ###### method to balance fold size #####
 # # Calculate the number of plots for each fire
 # plot_counts <- table(allmets$YrFireName)
@@ -78,8 +100,8 @@ cross_validate <- function(vars, data, fold_id) {
   results <- list() # Store results
   
   for(i in unique(fold_id)) {
-    training_data <- data[data$fold != i, ]
-    testing_data <- data[data$fold == i, ]
+    training_data <- data[data$spatial_fold != i, ]
+    testing_data <- data[data$spatial_fold == i, ]
     
     # Calculate minLeaf equivalent
     minLeaf <- round(nrow(training_data) / 75 / length(vars))
@@ -126,7 +148,7 @@ column_names_selected
 set.seed(444)
 
 # Full model
-full_model_results <- cross_validate(vars = column_names_selected, data = dd_cv, fold_id = dd_cv$fold)
+full_model_results <- cross_validate(vars = column_names_selected, data = ard_for_cv, fold_id = ard_for_cv$spatial_fold)
 
 full_r2 <- r_squared(full_model_results$obs, full_model_results$pred)
 full_r2

@@ -9,10 +9,10 @@ library(terra)
 #writeVector(imgseason, "VP/severity_tmp/data/saved/image-seasons-resolve-ecoregions.shp")
 
 ##########################################################
-################# Indices ##################
+################# Spectral data ##################
 ##########################################################
-
-indbi <- read.csv("VP/severity_tmp/data/saved/GEE/VIs_bilinear_08122024.csv")
+# Includes bands as of 08242024
+indbi <- read.csv("VP/severity_tmp/data/saved/GEE/VIs_bilinear_08242024.csv")
 
 names(indbi)
 indbi$system.index <- NULL
@@ -31,54 +31,11 @@ ggplot(indbi, aes(x=dmirbi, y=pcnt_ba_mo)) +
 cor(indbi$rbr, indbi$pcnt_ba_mo)
 
 
-##########################################################
-################# Bands ##################
-##########################################################
-
-# bands
-bands <- read.csv("VP/severity_tmp/data/saved/GEE/bands_bilinear_08122024.csv")
-
-nrow(unique(bands[, c("PlotID", "YrFireName")]))
-bands$system.index <- NULL
-bands$.geo <- NULL
-
-
-bands$dBlue = bands$Blue_pre - bands$Blue_post
-bands$dGreen = bands$Green_pre - bands$Green_post
-bands$dRed = bands$Red_pre - bands$Red_post
-bands$dNIR = bands$NIR_pre - bands$NIR_post
-bands$dSWIR1 = bands$SWIR1_pre - bands$SWIR1_post
-bands$dSWIR2 = bands$SWIR2_pre - bands$SWIR2_post
-bands$SWIR1.NIR_pre = bands$SWIR1_pre/bands$NIR_pre
-bands$SWIR1.NIR_post = bands$SWIR1_post/bands$NIR_post
-bands$SWIR2.NIR_pre = bands$SWIR2_pre/bands$NIR_pre
-bands$SWIR2.NIR_post = bands$SWIR2_post/bands$NIR_post
-bands$SWIR2.SWIR1_pre = bands$SWIR2_pre/bands$SWIR1_pre
-bands$SWIR2.SWIR1_post = bands$SWIR2_post/bands$SWIR1_post
-
-bands$dSWIR1.NIR = bands$SWIR1.NIR_pre - bands$SWIR1.NIR_post
-bands$dSWIR2.NIR = bands$SWIR2.NIR_pre - bands$SWIR2.NIR_post
-bands$dSWIR2.SWIR1 = bands$SWIR2.SWIR1_pre - bands$SWIR2.SWIR1_post
-
-# remove individual timestamp bands and the prefire ratios
-names(bands)
-bands <- bands[, -c(1:2, 6:7, 9:10, 12:17, 28, 30, 32)] 
-
-# check relationships - not that strong
-ggplot(bands, aes(x=dSWIR2, y=pcnt_ba_mo)) +
-  geom_point(aes(color=YrFireName)) +
-  geom_smooth() +
-  facet_wrap(~Dataset)+
-  theme_light() +
-  theme(legend.position="none")
-
-head(bands)
-
 
 ##########################################################
 ################# Terraclimate ##################
 ##########################################################
-climate <- read.csv("VP/severity_tmp/data/saved/GEE/terraclimate_08122024.csv")
+climate <- read.csv("VP/severity_tmp/data/saved/GEE/terraclimate_08242024.csv")
 
 climate$system.index <- NULL
 climate$.geo <- NULL
@@ -113,7 +70,7 @@ ggplot(climate, aes(x=zScorePrecip0, y=zScoreVPD0)) +
 ################# Topography ##################
 ##########################################################
 
-topo <- read.csv("VP/severity_tmp/data/saved/GEE/zs_topo_08122024.csv")
+topo <- read.csv("VP/severity_tmp/data/saved/GEE/zs_topo_08242024.csv")
 topo$system.index <- NULL
 topo$.geo <- NULL
 
@@ -125,9 +82,7 @@ topo$aspect <- NULL
 ##########################################################
 
 
-alldata <- merge(indbi, bands, by=c("PlotID", "Dataset", "FireYear", "Start_Day", "End_Day", "Unit", "ID", "YrFireName", "pcnt_ba_mo"))
-
-alldata <- merge(alldata, climate, by=c("PlotID", "Dataset", "FireYear", "Start_Day", "End_Day", "Unit", "ID", "YrFireName", "pcnt_ba_mo"))
+alldata <- merge(indbi, climate, by=c("PlotID", "Dataset", "FireYear", "Start_Day", "End_Day", "Unit", "ID", "YrFireName", "pcnt_ba_mo"))
 
 alldata <- merge(alldata, topo, by=c("PlotID", "Dataset", "FireYear", "Start_Day", "End_Day", "Unit", "ID", "YrFireName", "pcnt_ba_mo"))
 
@@ -145,6 +100,7 @@ duplicates_count
 #total_duplicated_rows <- sum(duplicates_count$n) - nrow(duplicates_count)
 #total_duplicated_rows
 
+alldata <- alldata[alldata$PlotID != "Wallow9_1_118",]
 
 ##########################################################
 ################# Save data ##################
@@ -171,7 +127,7 @@ write.csv(ard, "VP/severity_tmp/data/saved/ARD_nocoords.csv", row.names = FALSE)
 ##### ARD with plot locations
 
 # point location data
-coords <- vect("VP/severity_tmp/data/saved/allcoords_withbaloss_v5.shp")
+coords <- vect("VP/severity_tmp/data/saved/allcoords_withbaloss_v6.shp")
 
 # combine 
 names(coords)
@@ -183,13 +139,62 @@ names(ardcoords)
 ardcoords <- ardcoords[,!names(ardcoords) %in% c("FireYear", "Start_Day", "End_Day", "Unit", "ID")]
 
 # save ARD
-writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_08132024.gpkg")
+writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_08262024.gpkg")
 
-ard[ard$PlotID=="JOLL3",]
 
 ##########################################################
 ################# Old code ##################
 ##########################################################
+
+
+
+##########################################################
+################# Bands ##################
+##########################################################
+
+# # bands
+# bands <- read.csv("VP/severity_tmp/data/saved/GEE/bands_bilinear_08122024.csv")
+# 
+# nrow(unique(bands[, c("PlotID", "YrFireName")]))
+# bands$system.index <- NULL
+# bands$.geo <- NULL
+# 
+# 
+# bands$dBlue = bands$Blue_pre - bands$Blue_post
+# bands$dGreen = bands$Green_pre - bands$Green_post
+# bands$dRed = bands$Red_pre - bands$Red_post
+# bands$dNIR = bands$NIR_pre - bands$NIR_post
+# bands$dSWIR1 = bands$SWIR1_pre - bands$SWIR1_post
+# bands$dSWIR2 = bands$SWIR2_pre - bands$SWIR2_post
+# bands$SWIR1.NIR_pre = bands$SWIR1_pre/bands$NIR_pre
+# bands$SWIR1.NIR_post = bands$SWIR1_post/bands$NIR_post
+# bands$SWIR2.NIR_pre = bands$SWIR2_pre/bands$NIR_pre
+# bands$SWIR2.NIR_post = bands$SWIR2_post/bands$NIR_post
+# bands$SWIR2.SWIR1_pre = bands$SWIR2_pre/bands$SWIR1_pre
+# bands$SWIR2.SWIR1_post = bands$SWIR2_post/bands$SWIR1_post
+# 
+# bands$dSWIR1.NIR = bands$SWIR1.NIR_pre - bands$SWIR1.NIR_post
+# bands$dSWIR2.NIR = bands$SWIR2.NIR_pre - bands$SWIR2.NIR_post
+# bands$dSWIR2.SWIR1 = bands$SWIR2.SWIR1_pre - bands$SWIR2.SWIR1_post
+# 
+# # remove individual timestamp bands and the prefire ratios
+# names(bands)
+# bands <- bands[, -c(1:2, 6:7, 9:10, 12:17, 28, 30, 32)] 
+# 
+# # check relationships - not that strong
+# ggplot(bands, aes(x=dSWIR2, y=pcnt_ba_mo)) +
+#   geom_point(aes(color=YrFireName)) +
+#   geom_smooth() +
+#   facet_wrap(~Dataset)+
+#   theme_light() +
+#   theme(legend.position="none")
+# 
+# head(bands)
+
+
+
+
+
 
 # ind1 <- read.csv("VP/severity_tmp/data/saved/GEE/zs_VIs_03202024_pt1.csv")
 # ind2 <- read.csv("VP/severity_tmp/data/saved/GEE/zs_VIs_03202024_pt2.csv")

@@ -15,9 +15,9 @@ ecoregions
 
 biome_info <- terra::extract(ecoregions[, "ECO_NAME"], rfcoords)
 
-head(biome_info)
+#head(biome_info)
 rfcoords <- cbind(rfcoords, biome_info)
-head(rfcoords)
+#head(rfcoords)
 table(rfcoords$ECO_NAME)
 rfcoords$id.y <- NULL
 rfeco <- as.data.frame(rfcoords)

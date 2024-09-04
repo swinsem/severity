@@ -9,7 +9,7 @@ ard <- read.csv("VP/severity_tmp/data/saved/ARD_nocoords.csv")
 names(ard)
 
 ##### remove columns I don't want to test (keep YrFireName?)
-allmets <- ard[,!names(ard) %in% c("PlotID", "UniqueID", "Dataset")] # , "lat"
+allmets <- ard[,!names(ard) %in% c("PlotID", "UniqueID", "Dataset", "lat")] # , "lat"
 
 names(allmets)
 corr <- round(cor(allmets[,2:41]), 2)
@@ -44,9 +44,17 @@ column_names_selected <- names(rfdata[, selected_vars])
 column_names_selected
 hist(rfdata$pcnt_ba_mo)
 
+rf_formula = glue::glue("{target} ~ {paste(column_names_selected, collapse = ' + ')}")
+#pcnt_ba_mo ~ dswir2 + dswir1nir + rbr + post_swir2nir + post_nbr + zScoreCWD0 + zScoreAET1 + dswir2swir1 + zScorePrecip1 + zScorePrecip0 + meanVPD + meanPrecip + pcnt_ba_mo
+
 varImpPlot(rf_vsurf_all,
            sort = T,
            main = "VSURF Variable Importance")
+
+
+
+
+
 
 ##### simple RF
 rf_all <- randomForest(pcnt_ba_mo ~ ., data = rfdata, proximity = TRUE, ntree = 1000)

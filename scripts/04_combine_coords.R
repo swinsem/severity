@@ -18,6 +18,7 @@ agne <- read.csv("VP/severity_tmp/data/saved/FTM/plots_with_coords/FTM_plots_Agn
 andrus <- read.csv("VP/severity_tmp/data/saved/FTM/plots_with_coords/FTM_plots_Andrus_withcoordsba.csv")
 miller <- read.csv("VP/severity_tmp/data/saved/JayMiller/JayMiller_withcoordsba_rev.csv")
 band <- read.csv("VP/severity_tmp/data/saved/NPS/BAND_coords.csv")
+eri <- read.csv("VP/severity_tmp/data/saved/FTM/plots_with_coords/FTM_plots_Roccaforte_withcoordsba.csv")
 
 unique(hood$YrFireName)
 names(nps)
@@ -26,6 +27,7 @@ names(mciver)
 names(hood)
 head(hood)
 names(andrus)
+names(eri)
 
 # NPS formatting
 nps$YrFireName <- paste0(nps$fireyear, " - NPS ", nps$park)
@@ -61,9 +63,9 @@ names(agne) <- c("PlotID", "YrFireName", "Dataset", "Unit", "ID", "lat_wgs84", "
 names(miller)
 names(band)
 
-allcoords <- rbind(nps_sub, ss_sub, mciver, hood, harvey, andrus, agne, miller, band)
+allcoords <- rbind(nps_sub, ss_sub, mciver, hood, harvey, andrus, agne, miller, band, eri)
 
-nrow(nps_sub) + nrow(ss_sub) + nrow(mciver) + nrow(hood) + nrow(harvey) + nrow(andrus) + nrow(agne) + nrow(miller) + nrow(band)
+nrow(nps_sub) + nrow(ss_sub) + nrow(mciver) + nrow(hood) + nrow(harvey) + nrow(andrus) + nrow(agne) + nrow(miller) + nrow(band) + nrow(eri)
 # fix Tenderfoot Fall plot IDs to remove duplicates
 allcoords[allcoords$YrFireName=="2002 - Tenderfoot Fall",]$PlotID <- 
   paste0(allcoords[allcoords$YrFireName=="2002 - Tenderfoot Fall",]$ID, "_",
@@ -101,9 +103,8 @@ vcoords$End_Day <- days$img_season_end
 
 
 
-
-write.csv(allcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v5.csv", row.names = FALSE)
-writeVector(vcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v5.shp", overwrite = TRUE)
+write.csv(allcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v6.csv", row.names = FALSE)
+writeVector(vcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v6.shp", overwrite = TRUE)
 
 ## for splitting the data into two parts
 #vcoords
@@ -140,6 +141,8 @@ ggplot() +
 ggsave("VP/severity_tmp/plots/plot_map.png")
 
 hist(allcoords$pcnt_ba_mort)
+
+
 
 # check for one fire
 names(andrus_fire)

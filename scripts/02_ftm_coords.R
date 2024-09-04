@@ -378,7 +378,6 @@ unique(ftm_baloss[ftm_baloss$YrFireName %in% unique(harvey$YrFireName),]$YrFireN
 ftmtree_gunbarrel <- ftmtree[ftmtree$YrFireName=="2008 - Gunbarrel",]
 
 
-
 harvey <- harvey[!is.na(harvey$lat_wgs84),]
 
 harveyba <- merge(harvey, ftm_baloss[, c("Plot", "YrFireName", "Dataset", "Unit", "ID", "pcnt_ba_mort")], 
@@ -405,7 +404,7 @@ head(agnecoords)
 # Load the terra package
 library(terra)
 
-# Assuming your dataframe is named 'df' and has columns 'easting', 'northing'
+## Convert utm coords to lat long
 # First, create a SpatVector from your dataframe
 agnevect <- vect(agnecoords, geom=c("utm_x", "utm_y"), crs="+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs")
 
