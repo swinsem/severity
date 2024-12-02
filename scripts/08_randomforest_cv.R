@@ -1,5 +1,6 @@
 
 # Random forest cross validation
+library(randomForest)
 
 # using ard from 06_gee_exploratory
 
@@ -28,7 +29,9 @@ table(dd_cv$fold) # might be very uneven
 
 
 ### spatial folds
-ard_for_task_v = ard |> 
+ardcoords <- sf::st_read("VP/severity_tmp/data/saved/ARD_08262024.gpkg")
+
+ard_for_task_v = ardcoords |> 
   spatialsample::spatial_clustering_cv(v = 10)
 
 ard_with_spatial_folds_v = ard_for_task_v |>
@@ -49,40 +52,6 @@ ard_with_spatial_folds_v = ard_for_task_v |>
 names(ard_with_spatial_folds_v)
 ard_for_cv <- ard_with_spatial_folds_v[,!names(ard_with_spatial_folds_v) %in% c("PlotID", "Dataset", "YrFireName")]
 
-###### method to balance fold size #####
-# # Calculate the number of plots for each fire
-# plot_counts <- table(allmets$YrFireName)
-# 
-# # Convert it to a data frame
-# fire_sizes <- data.frame(FireName = names(plot_counts), PlotCount = as.integer(plot_counts))
-# 
-# # Sort fires by size (largest to smallest)
-# fire_sizes <- fire_sizes[order(-fire_sizes$PlotCount),]
-# 
-# # Initialize folds
-# k <- 5
-# folds <- vector("list", k)
-# fold_sizes <- integer(k)
-# 
-# # Greedy assignment of fires to folds
-# for (i in seq_len(nrow(fire_sizes))) {
-#   # Find the fold with the minimum number of plots
-#   min_fold <- which.min(fold_sizes)
-#   # Assign this fire to the fold
-#   folds[[min_fold]] <- c(folds[[min_fold]], fire_sizes$FireName[i])
-#   # Update the size of the fold
-#   fold_sizes[min_fold] <- fold_sizes[min_fold] + fire_sizes$PlotCount[i]
-# }
-# 
-# # Now map the fold assignments back to the original dataset
-# fold_assignments <- rep(NA, nrow(allmets))
-# for (i in seq_along(folds)) {
-#   fold_assignments[allmets$YrFireName %in% folds[[i]]] <- i
-# }
-# allmets$fold <- fold_assignments
-# 
-# # Check the balance
-# table(allmets$fold)
 
 ##### cross-validation #####
 
@@ -95,65 +64,101 @@ dd_cv <- dd_cv[, -which(names(dd_cv) == "YrFireName")]
 ## rerun with fold removed!!! and maybe lat??
 #all_vars_full <- c("rbr", "dSWIR1", "dndvi", "slope", "meanAET", "dBlue", "aspectRad") # short list for testing
 
+#pcnt_ba_mo ~ dswir2 + dswir1nir + rbr + post_swir2nir + post_nbr + zScoreCWD0 + zScoreAET1 + dswir2swir1 + zScorePrecip1 + zScorePrecip0 + meanVPD + meanPrecip + pcnt_ba_mo
+i=1
+data=ard_for_cv
+i=Fold01
+fold_id = ard_for_cv$spatial_fold
+
 # cross validation function
-cross_validate <- function(vars, data, fold_id) {
+cross_validate <- function(data, vars, fold_id) { # 
   results <- list() # Store results
   
   for(i in unique(fold_id)) {
-    training_data <- data[data$spatial_fold != i, ]
-    testing_data <- data[data$spatial_fold == i, ]
+    training_data <- data[data$spatial_fold != i, c(vars, "UniqueID")]
+    testing_data <- data[data$spatial_fold == i, c(vars, "UniqueID")]
     
     # Calculate minLeaf equivalent
-    minLeaf <- round(nrow(training_data) / 75 / length(vars))
-    
+    #minLeaf <- round(nrow(training_data) / 75 / length(vars))
+    minLeaf <- 60
     # Fit model
     rf_model <- randomForest(pcnt_ba_mo ~ ., data = training_data[, vars],
                              ntree = 500,
-                             mtry = floor(length(vars)/3),
-                             nodesize = minLeaf)
-    # # Fit model
-    # rf_model <- randomForest(pcnt_ba_mo ~ ., data = training_data[, c(vars, "pcnt_ba_mo")], ## pcnt_ba_mo is already there
-    #                          ntree = 500,
-    #                          mtry = floor(length(vars)/3),
-    #                          nodesize = minLeaf)
+                             mtry = 7,
+                             nodesize = minLeaf,
+                             replace=FALSE)
     
     # Predict on testing data
-    predictions <- predict(rf_model, testing_data)
+    predictions <- predict(rf_model, testing_data[, vars])
     
-    # Store results
-    results[[i]] <- data.frame(
-      unique_id <- testing_data$UniqueID,
-      obs = testing_data$pcnt_ba_mo, 
-      pred = predictions, 
-      fold = i)
+    # Ensure the predictions and the observations are aligned correctly
+    if (!identical(rownames(testing_data), rownames(data[data$spatial_fold == i, ]))) {
+      stop("Mismatch in row order between testing_data and original data subset.")
+    }
+    
+    # Store results ensuring correct assignment
+    fold_results <- data.frame(
+      unique_id = testing_data$UniqueID,  # Ensure UniqueID matches
+      obs = testing_data$pcnt_ba_mo,  # Observed values
+      pred = predictions,  # Predicted values
+      fold = i  # Fold identifier
+    )
+    
+    # Append to the list of results
+    results[[i]] <- fold_results
   }
   
-  return(do.call(rbind, results))
+  # Combine all fold results into a single data frame
+  combined_results <- do.call(rbind, results)
+  
+  # Check for potential mismatches
+  if (any(is.na(combined_results$obs) | is.na(combined_results$pred))) {
+    warning("NA values found in observations or predictions.")
+  }
+  
+  return(combined_results)
+  #   
+  #   # Store results
+  #   results[[i]] <- data.frame(
+  #     unique_id = testing_data$UniqueID,
+  #     obs = testing_data$pcnt_ba_mo, 
+  #     pred = predictions, 
+  #     fold = i)
+  # }
+  # 
+  # return(do.call(rbind, results))
 }
 
-
-r_squared <- function(obs, pred) {
-  ss_res <- sum((obs - pred)^2)
-  ss_tot <- sum((obs - mean(obs))^2)
-  r_squared <- 1 - ss_res / ss_tot
-  return(r_squared)
-}
 
 ########################################################
 ###### RF with VSURF chosen variables ######
 
 # variables selected in 06_gee_exploratory from VSURF
-column_names_selected 
+#column_names_selected 
 
-set.seed(444)
+#names(ard_for_cv)
+
+
 
 # Full model
-full_model_results <- cross_validate(vars = column_names_selected, data = ard_for_cv, fold_id = ard_for_cv$spatial_fold)
+vars <- c("dswir2", "dswir1nir","rbr", "post_swir2nir", "post_nbr", "zScoreCWD0", "zScoreAET1", "dswir2swir1", "zScorePrecip1", "zScorePrecip0", "meanVPD", "meanPrecip", "pcnt_ba_mo")
+vars <- c("dgreen", "dblue","elevation", "eastness", "dnirv", "meanTPI", "HLI", "pre_evi", "zScorePrecip1", "zScorePrecip0", "meanVPD", "meanPrecip", "pcnt_ba_mo")
 
-full_r2 <- r_squared(full_model_results$obs, full_model_results$pred)
+set.seed(444)
+full_model_results_noreplace <- cross_validate(data = ard_for_cv, fold_id = ard_for_cv$spatial_fold, vars=vars) ## rerun with replace = FALSE in the cv function above
+caret::R2(obs=full_model_results_noreplace$obs, pred=full_model_results_noreplace$pred)
+caret::R2(obs=full_model_results_noreplace[full_model_results_noreplace$fold=="Fold08",]$obs, pred=full_model_results_noreplace[full_model_results_noreplace$fold=="Fold08",]$pred)
+
+full_model_results <- cross_validate(data = ard_for_cv, fold_id = ard_for_cv$spatial_fold)
+#full_model_results <- cross_validate(vars = column_names_selected, data = ard_for_cv, fold_id = ard_for_cv$spatial_fold)
+
+
+full_r2 <- caret::R2(obs=full_model_results$obs, pred=full_model_results$pred)
 full_r2
-rmse <- RMSE(pred=full_model_results$pred, obs = full_model_results$obs)
-mae <- MAE(pred=full_model_results$pred, obs = full_model_results$obs)
+rmse <- caret::RMSE(pred=full_model_results$pred, obs = full_model_results$obs)
+rmse
+mae <- caret::MAE(pred=full_model_results$pred, obs = full_model_results$obs)
+mae
 
 str(full_model_results)
 names(full_model_results) <- c("UniqueID", "obs", "pred", "fold")
@@ -174,7 +179,7 @@ full_model_results$obs_bin <- ifelse(full_model_results$obs < .25, 1,
                                              ifelse(full_model_results$obs >=.5 & full_model_results$obs < .75, 3, 
                                                     ifelse(full_model_results$obs >=.75 & full_model_results$obs < .9, 4, 5))))
 
-write.csv(full_model_results, "VP/severity_tmp/data/saved/outputs/rf_cv5_results.csv", row.names=FALSE)
+write.csv(full_model_results, "VP/severity_tmp/data/saved/outputs/rf_cv6_results.csv", row.names=FALSE)
 
 ggplot(full_model_results) +
   geom_boxplot(aes(x=as.factor(obs_bin), y=pred)) +
@@ -189,9 +194,9 @@ ggplot(full_model_results) +
 ggsave("VP/severity_tmp/plots/rf_pred_bins.png", width = 8, height = 8, units = "in")
 
 table(full_model_results$obs_bin, full_model_results$pred_bin)
-class_metrics <- confusionMatrix(as.factor(full_model_results$pred_bin), as.factor(full_model_results$obs_bin))$byClass
+class_metrics <- caret::confusionMatrix(as.factor(full_model_results$pred_bin), as.factor(full_model_results$obs_bin))$byClass
 class_metrics
-write.csv(class_metrics, "VP/severity_tmp/data/saved/outputs/rf_cv5_confusionmatrix.csv")
+write.csv(class_metrics, "VP/severity_tmp/data/saved/outputs/rf_cv6_confusionmatrix.csv")
 
 # Merge with original data
 rfcoords <- merge(ardcoords[, "UniqueID"], full_model_results, by = "UniqueID")
@@ -286,3 +291,40 @@ results_summary3
 variables_to_drop3 <- results_summary3$Variable[results_summary3$R2_Difference < 0.005]
 variables_to_drop3
 
+
+
+
+###### method to balance fold size #####
+# # Calculate the number of plots for each fire
+# plot_counts <- table(allmets$YrFireName)
+# 
+# # Convert it to a data frame
+# fire_sizes <- data.frame(FireName = names(plot_counts), PlotCount = as.integer(plot_counts))
+# 
+# # Sort fires by size (largest to smallest)
+# fire_sizes <- fire_sizes[order(-fire_sizes$PlotCount),]
+# 
+# # Initialize folds
+# k <- 5
+# folds <- vector("list", k)
+# fold_sizes <- integer(k)
+# 
+# # Greedy assignment of fires to folds
+# for (i in seq_len(nrow(fire_sizes))) {
+#   # Find the fold with the minimum number of plots
+#   min_fold <- which.min(fold_sizes)
+#   # Assign this fire to the fold
+#   folds[[min_fold]] <- c(folds[[min_fold]], fire_sizes$FireName[i])
+#   # Update the size of the fold
+#   fold_sizes[min_fold] <- fold_sizes[min_fold] + fire_sizes$PlotCount[i]
+# }
+# 
+# # Now map the fold assignments back to the original dataset
+# fold_assignments <- rep(NA, nrow(allmets))
+# for (i in seq_along(folds)) {
+#   fold_assignments[allmets$YrFireName %in% folds[[i]]] <- i
+# }
+# allmets$fold <- fold_assignments
+# 
+# # Check the balance
+# table(allmets$fold)

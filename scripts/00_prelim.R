@@ -2,11 +2,11 @@
 ## First, just a space to putz around in the FTM database
 ## Second, a little bit of processing on Saba's data to combine year of fire with the data (for getting the VIs for that year)
 
-library(aws.s3)
+#library(aws.s3)
 
 ## first look at Alina Cansler's fire and tree mortality database
-bucket_name="tmp-sara"
-object_name= paste0("severity/data/FTM/Data/FTM_trees.csv")
+#bucket_name="tmp-sara"
+#object_name= paste0("severity/data/FTM/Data/FTM_trees.csv")
 #ftmtree <- s3read_using(FUN = read.csv, bucket = bucket_name, object = object_name)
 
 ftmtree <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_trees.csv")
@@ -20,8 +20,7 @@ treetest <- ftmtree[ftmtree$YrFireName=="2011 - Wallow",]
 roccatest <- treetest[treetest$Plot == "1_4_14",]
 
 
-object_namef= paste0("severity/data/original/FTM/Data/FTM_fires.csv")
-ftmfire <- s3read_using(FUN = read.csv, bucket = bucket_name, object = object_namef)
+ftmfire <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_fires.csv")
 head(ftmfire)
 # save as vector for plotting
 ftmfirevect <- vect(ftmfire, geom=c("Longitude", "Latitude"), crs="epsg:4326")
