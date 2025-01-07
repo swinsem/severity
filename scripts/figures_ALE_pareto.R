@@ -32,6 +32,7 @@ top_results = r2_pareto_front |> na.omit()
 
 best_fit = top_results[2,]
 
+set.seed(4678)
 fm1 = ranger::ranger(
   formula = as.formula(best_fit$important_variable_rf_formula), 
   data = sf::st_drop_geometry(ard[, c(target, features)]), 
@@ -77,9 +78,9 @@ plot_data_important_vars = calc_plot_data(
 ## Plot first order ALE plots ##
 
 facet_labels <- c(
+  "dswir2swir1" = "dSWIR2/SWIR1",
   "zScorePrecip1" = "Z-Score Precipitation",
-  "northness" = "Northness",
-  "dswir2swir1" = "dSWIR2:SWIR1"
+  "northness" = "Northness"
 )
 ggplot(plot_data_important_vars, aes(x = x, y = y)) +
   geom_line() +
@@ -88,10 +89,41 @@ ggplot(plot_data_important_vars, aes(x = x, y = y)) +
   theme_bw()
 ggsave("VP/severity_tmp/plots/ALE_first_order.png", width = 6, height = 4, units = "in")
 
+
+# Ensure `var` is a factor with the desired order
+plot_data_important_vars2 <- plot_data_important_vars
+plot_data_important_vars2$var <- factor(
+  plot_data_important_vars2$var,
+  levels = c("dswir2swir1", "zScorePrecip1", "northness")
+)
+
+# Plot the ALE plots with reordered facets and density plots
+ggplot(plot_data_important_vars2, aes(x = x, y = y)) +
+  geom_line() + 
+  geom_rug(sides = "b", alpha = 0.5) +  # Add density rug
+  facet_wrap(
+    facets = "var", 
+    scales = "free", 
+    labeller = labeller(var = facet_labels)
+  ) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 10),  # Adjust facet label size
+    axis.title = element_text(size = 10)
+  ) +
+  xlab("x") +
+  ylab("y")
+ggsave("VP/severity_tmp/plots/ALE_first_order2.png", width = 6, height = 4, units = "in")
+
 ##########################################
 ##### Two-way ALE plots #####
 ##########################################
 
+## 
+# Load the necessary library
+library(fields)
+
+# Prediction function
 yhat <- function(X.model, newdata) as.numeric(predict(X.model, newdata)$predictions)
 
 # dSWIR2SWIR1 to precip
@@ -99,6 +131,7 @@ yhat <- function(X.model, newdata) as.numeric(predict(X.model, newdata)$predicti
 # Save the plot as a PNG file
 png("VP/severity_tmp/plots/two_way_ale_precip_dswir.png", width = 6, height = 5, units="in", res=300)
 
+# Run ALEPlot to get the ALE values
 zscoreprecip1_dswir_two_way_ale = ALEPlot::ALEPlot(
   X = sf::st_drop_geometry(ard[, fm1$forest$independent.variable.names]), 
   X.model = fm1, 
@@ -106,16 +139,19 @@ zscoreprecip1_dswir_two_way_ale = ALEPlot::ALEPlot(
   pred.fun = yhat
 )
 
-image(
+# Create the heatmap with a legend
+image.plot(
   zscoreprecip1_dswir_two_way_ale$x.values[[1]], 
   zscoreprecip1_dswir_two_way_ale$x.values[[2]], 
   zscoreprecip1_dswir_two_way_ale$f.values, 
   xlab = "Z-score Precipitation", 
-  ylab = "dSWIR2:SWIR1", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  ylab = "dSWIR2/SWIR1", 
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5  # Adjusts the margin for the legend, change if needed
 )
 
 dev.off()
+
 
 # dSWIR2SWIR1 to northness
 png("VP/severity_tmp/plots/two_way_ale_north_dswir.png", width = 6, height = 5, units="in", res=300)
@@ -127,13 +163,14 @@ northness_dswir_two_way_ale = ALEPlot::ALEPlot(
   pred.fun = yhat
 )
 
-image(
+image.plot(
   northness_dswir_two_way_ale$x.values[[1]], 
   northness_dswir_two_way_ale$x.values[[2]], 
   northness_dswir_two_way_ale$f.values, 
   xlab = "Northness", 
-  ylab = "dSWIR2:SWIR1", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  ylab = "dSWIR2/SWIR1", 
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5
 )
 
 dev.off()
@@ -158,6 +195,122 @@ image(
 ) 
    
 dev.off()
+
+### code attempts that were abandoned:
+
+# ## attempted code to add legends and density plots
+# library(ALEPlot)
+# 
+# # Prediction function
+# yhat <- function(X.model, newdata) as.numeric(predict(X.model, newdata)$predictions)
+# 
+# # Calculate 2D ALE values
+# zscoreprecip1_dswir_two_way_ale = ALEPlot::ALEPlot(
+#   X = sf::st_drop_geometry(ard[, fm1$forest$independent.variable.names]), 
+#   X.model = fm1, 
+#   J = c("zScorePrecip1", "dswir2swir1"), 
+#   pred.fun = yhat
+# )
+# 
+# # Set color palette
+# colors <- hcl.colors(n = 100, palette = "Blue-Red")
+# 
+# # Save the plot as a PNG file
+# png("VP/severity_tmp/plots/two_way_ale_precip_dswir_v6.png", width = 6, height = 5, units = "in", res = 300)
+# 
+# # Use filled.contour for image with legend
+# filled.contour(
+#   x = zscoreprecip1_dswir_two_way_ale$x.values[[1]], 
+#   y = zscoreprecip1_dswir_two_way_ale$x.values[[2]], 
+#   z = zscoreprecip1_dswir_two_way_ale$f.values, 
+#   color.palette = function(n) hcl.colors(n, palette = "Blue-Red"),
+#   xlab = "Z-score Precipitation", 
+#   ylab = "dSWIR2:SWIR1",
+#   plot.axes = {
+#     axis(1)
+#     axis(2)
+#     #rug(sf::st_drop_geometry(ard$zScorePrecip1), side = 1, col = "black", ticksize = 0.01, lwd = 0.5)  # Density for x-axis
+#     #rug(sf::st_drop_geometry(ard$dswir2swir1), side = 2, col = "black", ticksize = 0.01, lwd = 0.5)  # Density for y-axis
+#   }
+# )
+# 
+# # Close PNG device
+# dev.off()
+
+## v2
+# library(ggplot2)
+# 
+# # Prepare the data for ggplot
+# ale_data <- expand.grid(
+#   x = zscoreprecip1_dswir_two_way_ale$x.values[[1]], 
+#   y = zscoreprecip1_dswir_two_way_ale$x.values[[2]]
+# )
+# ale_data$ale <- as.vector(zscoreprecip1_dswir_two_way_ale$f.values)
+# 
+# # Check if the ale_data contains NA values or is sparse
+# ale_data <- na.omit(ale_data)
+# 
+# # Create the ggplot
+# ggplot(ale_data, aes(x = x, y = y, fill = ale)) +
+#   geom_tile(width = 0.05, height = 0.05) +  # Adjust tile width and height
+#   scale_fill_gradient2(
+#     low = "blue", mid = "white", high = "red", midpoint = 0, 
+#     name = "ALE", 
+#     guide = guide_colorbar(barwidth = 1, barheight = 10)
+#   ) +
+#   xlab("Z-score Precipitation") +
+#   ylab("dSWIR2:SWIR1") +
+#   theme_minimal() +
+#   theme(
+#     axis.ticks = element_line(linewidth = 0.5),  # Update for ticks
+#     axis.title = element_text(size = 12),
+#     legend.position = "right",
+#     legend.title = element_text(size = 12),
+#     legend.text = element_text(size = 10)
+#   ) +
+#   geom_rug(
+#     data = ale_data,  # Correct dataset for geom_rug
+#     aes(x = x), 
+#     sides = "b",  # Bottom rug only
+#     alpha = 0.5
+#   ) +
+#   geom_rug(
+#     data = ale_data,  # Correct dataset for geom_rug
+#     aes(y = y), 
+#     sides = "l",  # Left rug only
+#     alpha = 0.5
+#   )
+
+
+## original code
+
+# yhat <- function(X.model, newdata) as.numeric(predict(X.model, newdata)$predictions)
+# 
+# # dSWIR2SWIR1 to precip
+# 
+# # Save the plot as a PNG file
+# png("VP/severity_tmp/plots/two_way_ale_precip_dswir.png", width = 6, height = 5, units="in", res=300)
+# 
+# zscoreprecip1_dswir_two_way_ale = ALEPlot::ALEPlot(
+#   X = sf::st_drop_geometry(ard[, fm1$forest$independent.variable.names]), 
+#   X.model = fm1, 
+#   J = c("zScorePrecip1", "dswir2swir1"), 
+#   pred.fun = yhat
+# )
+# 
+# image(
+#   zscoreprecip1_dswir_two_way_ale$x.values[[1]], 
+#   zscoreprecip1_dswir_two_way_ale$x.values[[2]], 
+#   zscoreprecip1_dswir_two_way_ale$f.values, 
+#   xlab = "Z-score Precipitation", 
+#   ylab = "dSWIR2:SWIR1", 
+#   col = hcl.colors(n = 100, palette = "Blue-Red")
+# )
+# 
+# dev.off()
+
+
+
 # # more confusing
   # contour(
   #   zscoreprecip1_rdnbr_two_way_ale$x.values[[1]], 
