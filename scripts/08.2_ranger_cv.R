@@ -141,7 +141,7 @@ ranger_results$obs_bin <- ifelse(ranger_results$obs < .25, 1,
                                                    ifelse(ranger_results$obs >=.75 & ranger_results$obs < .9, 4, 5))))
 
 write.csv(ranger_results, "VP/severity_tmp/data/saved/outputs/ranger_cv_results.csv", row.names=FALSE)
-
+ranger_results <- read.csv("VP/severity_tmp/data/saved/outputs/ranger_cv_results.csv")
 ggplot(ranger_results) +
   geom_boxplot(aes(x=as.factor(obs_bin), y=pred)) +
   theme_light() +
