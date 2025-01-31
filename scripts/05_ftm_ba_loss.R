@@ -20,9 +20,8 @@ ftmtree <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_trees2.csv")
 head(ftmtree)
 names(ftmtree)
 
-# load the fires data (loads from s3 easily since it's smaller)
-object_namef= paste0("severity/RDS-2020-0001-2/Data/FTM_fires.csv")
-ftmfire <- s3read_using(FUN = read.csv, bucket = bucket_name, object = object_namef)
+# load the fires data 
+ftmfire <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_fires.csv") 
 head(ftmfire)
 
 ftmfirehood <- ftmfire[ftmfire$Dataset %in% c("Hood", "Breece", "Cluck", "Davis", "Hood_Idaho", "Lerch", "Progar"),]
