@@ -140,9 +140,15 @@ ardcoords <- ardcoords[,!names(ardcoords) %in% c("FireYear", "Start_Day", "End_D
 
 # save ARD
 writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_08262024.gpkg")
-
-
-##########################################################
+writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_01282025.shp")
+ardnew <- vect("VP/severity_tmp/data/saved/ARD_01212025.gpkg")
+ardnew$aspectRad <- NULL
+ardnew$lat <- NULL
+writeVector(ardnew, "VP/severity_tmp/data/saved/ARD_01282025.shp")
+ardnewdf <- as.data.frame(ardnew)
+names(ardnewdf)
+write.csv(ardnewdf, "VP/severity_tmp/data/saved/ARD_01282025.csv", row.names = FALSE)
+####################NULL##########################################################
 ################# Old code ##################
 ##########################################################
 
