@@ -11,10 +11,12 @@ fires <- ard %>%
   group_by(Dataset, YrFireName) %>%
   summarize()
 
-
-
+names(ardcoords)
+#names(full_model_results)[1] <- "UniqueID"
+names(full_model_results)
+# make model results into a spatvector
 rfcoords <- merge(ardcoords[, "UniqueID"], full_model_results, by = "UniqueID")
-names(rfcoords)
+
 
 ## extract ecoregion
 ecoregions <- vect("VP/severity_tmp/data/Ecoregions2017/Ecoregions2017.shp")
@@ -28,17 +30,19 @@ ardcoords$ecoregion <- neward$ECO_NAME
 ard2 <- as.data.frame(ardcoords)
 writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_01212025.gpkg")
 #head(biome_info)
+
 rfcoords <- cbind(rfcoords, biome_info)
 
+table(rfcoords$ECO_NAME)
 ## replace some
 rfcoords$ECO_NAME <- ifelse(rfcoords$ECO_NAME=="California interior chaparral and woodlands", "Klamath-Siskiyou forests", rfcoords$ECO_NAME)
 rfcoords$ECO_NAME <- ifelse(rfcoords$ECO_NAME=="Great Basin shrub steppe", "Sierra Nevada forests", rfcoords$ECO_NAME)
-rfcoords$ECO_NAME <- ifelse(rfcoords$ECO_NAME=="Colorado Plateau shrublands", "Wasatch and Uinta montane forests", rfcoords$ECO_NAME)
+
 
 #head(rfcoords)
 #table(rfcoords$ECO_NAME)
 rfcoords$id.y <- NULL
-rfeco <- as.data.frame(rfcoords)
+
 
 # Calculate R² for each ECO_NAME
 r2_table <- rfeco %>%
@@ -46,10 +50,12 @@ r2_table <- rfeco %>%
   summarise(R2 = caret::R2(obs, pred), n_rows = n())
 r2_table
 
+rfcoords$ECO_NAME <- ifelse(rfcoords$ECO_NAME=="Colorado Plateau shrublands", "Wasatch and Uinta montane forests", rfcoords$ECO_NAME)
+rfeco <- as.data.frame(rfcoords)
 ggplot(rfeco) +
   geom_point(aes(x=obs, y=pred), alpha=.6) +
   geom_abline() +
-  geom_smooth(aes(x=obs, y=pred)) +
+  geom_smooth(aes(x=obs, y=pred), method = "loess") +
   theme_light() +
   ylim(0, 1) +
   ylab("Predicted BA loss") +

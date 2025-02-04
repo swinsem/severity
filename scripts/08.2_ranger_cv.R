@@ -2,6 +2,21 @@
 # Random forest cross validation
 library(ranger)
 
+cpi_results_full = data.table::fread("VP/severity_tmp/data/saved/outputs/conditional-predictive-impact-results_v4.0.csv")
+
+cpi_results = cpi_results_full |>
+  dplyr::select(-Variable, -CPI, -SE, -test, -statistic, -estimate, -p.value, -ci.lo) |>
+  unique()
+
+# Plot Pareto frontier of cross-fold mean R2 and overall R2 of important variable reduced model
+r2_pareto_front = rPref::psel(
+  df = cpi_results,
+  pref = rPref::high(r2_important_variables_overall) * rPref::high(r2_important_variables)
+)
+
+top_results = r2_pareto_front |> na.omit()
+
+best_fit = top_results[2,]
 
 set.seed(20240724)
 
@@ -114,6 +129,7 @@ caret::MAE(obs=ranger_results$obs, pred=ranger_results$pred)
 
 
 str(full_model_results)
+str(ranger_results)
 names(ranger_results) <- c("UniqueID", "obs", "pred", "fold")
 
 ggplot(ranger_results) +
