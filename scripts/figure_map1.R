@@ -6,6 +6,7 @@ library(ggplot2)
 library("rnaturalearth")
 library("rnaturalearthdata")
 
+## MUST RUN BEGINNING OF 09_spatialanalysis
 
 ardcoords <- vect("VP/severity_tmp/data/saved/ARD_08262024.gpkg")
 
@@ -51,8 +52,19 @@ ggplot() +
   scale_fill_manual(values = color_palette,
                     name = "Ecoregions") +
   # Add a title to the legend
-  labs(fill = "Ecoregions")
-ggsave("VP/severity_tmp/plots/plot_map_ecoregion.png", width=7, height = 5, units = "in")
+  labs(fill = "Ecoregions") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  theme(axis.title.x=element_text(colour="grey20"),
+        axis.title.y=element_text(colour="grey20")) +
+  ggspatial::annotation_north_arrow(
+    location = "tr", which_north = "true",
+    #pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"),
+    style = ggspatial::north_arrow_fancy_orienteering(
+      fill = c("grey40", "white"),
+      line_col = "grey20",
+      text_family = "ArcherPro Book"))
+ggsave("VP/severity_tmp/plots/plot_map_ecoregion2.png", width=7, height = 5, units = "in")
 
 
 
