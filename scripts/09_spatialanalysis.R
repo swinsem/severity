@@ -25,10 +25,12 @@ ecoregions
 
 
 biome_info <- terra::extract(ecoregions[, "ECO_NAME"], rfcoords)
-neward <- terra::extract(ecoregions[, "ECO_NAME"], ardcoords)
-ardcoords$ecoregion <- neward$ECO_NAME
-ard2 <- as.data.frame(ardcoords)
-writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_01212025.gpkg")
+
+# Make new ardcoords file with ecoregion
+#neward <- terra::extract(ecoregions[, "ECO_NAME"], ardcoords)
+#ardcoords$ecoregion <- neward$ECO_NAME
+#ard2 <- as.data.frame(ardcoords)
+#writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_01212025.gpkg")
 #head(biome_info)
 
 rfcoords <- cbind(rfcoords, biome_info)
@@ -45,7 +47,7 @@ rfcoords$id.y <- NULL
 
 
 # Calculate R² for each ECO_NAME
-r2_table <- rfeco %>%
+r2_table <- as.data.frame(rfcoords) %>%
   group_by(ECO_NAME) %>%
   summarise(R2 = caret::R2(obs, pred), n_rows = n())
 r2_table
@@ -56,13 +58,13 @@ ggplot(rfeco) +
   geom_point(aes(x=obs, y=pred), alpha=.6) +
   geom_abline() +
   geom_smooth(aes(x=obs, y=pred), method = "loess") +
-  theme_light() +
+  theme_bw() +
   ylim(0, 1) +
   ylab("Predicted BA loss") +
   xlab("Observed BA loss") +
   facet_wrap(~ ECO_NAME, scales = "free", 
              labeller = label_wrap_gen(width = 20))
-ggsave("VP/severity_tmp/plots/rf_pred_by_ecoregion.png", width = 8, height = 9, units = "in")
+ggsave("VP/severity_tmp/plots/rf_pred_by_ecoregion2.png", width = 8, height = 9, units = "in")
 
 library(plotly)
 # interactive plotly plot
