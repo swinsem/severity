@@ -30,7 +30,7 @@ biome_info <- terra::extract(ecoregions[, "ECO_NAME"], rfcoords)
 #neward <- terra::extract(ecoregions[, "ECO_NAME"], ardcoords)
 #ardcoords$ecoregion <- neward$ECO_NAME
 #ard2 <- as.data.frame(ardcoords)
-#writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_01212025.gpkg")
+#writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_01212025.gpkg") # ARD with ecoregion
 #head(biome_info)
 
 rfcoords <- cbind(rfcoords, biome_info)

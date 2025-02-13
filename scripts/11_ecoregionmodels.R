@@ -39,7 +39,7 @@ cpi_results = cpi_results_er |>
 
 bestr2 <- cpi_results %>%
   group_by(ecoregion) %>%
-  slice_max(r2_important_variables_overall, n = 1, with_ties = FALSE) %>%
+  slice_max(r2_important_variables_overall, n = 10, with_ties = FALSE) %>%
   ungroup()
 names(bestr2)
 bestr2table <- bestr2[, c(1:5, 17,24,25)]
