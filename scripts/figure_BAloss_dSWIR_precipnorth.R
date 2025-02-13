@@ -113,6 +113,25 @@ ggsave("VP/severity_tmp/plots/BA_dSWIR_combined2.png",
 
 
 
+ggplot(ard, aes(x = zScorePrecip1, y = pcnt_ba_mo)) +
+  geom_point(aes(alpha=0.25), show_guide = FALSE) +
+  geom_smooth() 
+library(mgcv)
+m1 <- mgcv::gam(pcnt_ba_mo ~ s(zScorePrecip1) + s(northness) + s(dswir2swir1), data=ard)
+m1
+plot(m1)
+
+m2 <- mgcv::gam(pcnt_ba_mo ~ s(zScorePrecip1, dswir2swir1, northness), data=ard)
+plot(m2)
+
+ard2 <- as.data.frame(merge(rfcoords[, c("UniqueID", "ECO_NAME")], ard, by="UniqueID"))
+names(ard2)
+
+m3 <- mgcv::gam(pcnt_ba_mo ~ as.factor(ECO_NAME) + s(zScorePrecip1, by=as.factor(ECO_NAME) ) + s(northness) + s(dswir2swir1), data=ard2)
+m3
+plot(m3, ylim=c(-1, 1))
+
+
 precip_mort_plot_data = ard |> 
   dplyr::group_by(zScorePrecip1 > 0) |> 
   dplyr::summarize(pcnt_ba_mo = mean(pcnt_ba_mo))
