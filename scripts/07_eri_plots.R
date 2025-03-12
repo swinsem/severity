@@ -1,9 +1,7 @@
 
-library(aws.s3)
+
 library(dplyr)
 
-bucket_name="tmp-sara"
-object_name= paste0("severity/data/FTM/Data/FTM_trees.csv")
 ftmtree <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_trees.csv")
 
 head(ftmtree)

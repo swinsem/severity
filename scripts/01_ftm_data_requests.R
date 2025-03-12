@@ -7,7 +7,7 @@ library(aws.s3)
 
 ## load Alina Cansler's fire and tree mortality database (FTM)
 bucket_name="tmp-sara"
-object_name= paste0("severity/RDS-2020-0001-2/Data/FTM_trees.csv")
+#object_name= paste0("severity/RDS-2020-0001-2/Data/FTM_trees.csv")
 #ftmtree <- s3read_using(FUN = read.csv, bucket = bucket_name, object = object_name)
 ftmtree <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_trees2.csv") 
 
@@ -15,8 +15,9 @@ head(ftmtree)
 names(ftmtree)
 
 # load the fires data (loads from s3 easily since it's smaller)
-object_namef= paste0("severity/RDS-2020-0001-2/Data/FTM_fires.csv")
-ftmfire <- s3read_using(FUN = read.csv, bucket = bucket_name, object = object_namef)
+#object_namef= paste0("severity/RDS-2020-0001-2/Data/FTM_fires.csv")
+#ftmfire <- s3read_using(FUN = read.csv, bucket = bucket_name, object = object_namef)
+ftmfire <- read.csv("VP/severity_tmp/data/original/FTM/Data/FTM_fires.csv") 
 head(ftmfire)
 
 # remove fires with no plot size or min tree size
