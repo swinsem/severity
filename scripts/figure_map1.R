@@ -8,7 +8,7 @@ library("rnaturalearthdata")
 
 ## MUST RUN BEGINNING OF 09_spatialanalysis
 
-ardcoords <- vect("VP/severity_tmp/data/saved/ARD_08262024.gpkg")
+ardcoords <- vect("VP/severity_tmp/data/saved/ARD_01212025.gpkg")
 
 ## plot ecoregions
 library(sf)
@@ -24,7 +24,7 @@ bbox["ymin"] <- 32
 bbox["xmax"] <- -105
 bbox["ymax"] <- 49
 # Add a filter for the 15 ecoregions that are in r2_table to color them differently
-selected_ecoregions <- r2_table$ECO_NAME
+selected_ecoregions <- r2_table$ecoregion
 
 
 
@@ -63,8 +63,9 @@ ggplot() +
     style = ggspatial::north_arrow_fancy_orienteering(
       fill = c("grey40", "white"),
       line_col = "grey20",
-      text_family = "ArcherPro Book"))
-ggsave("VP/severity_tmp/plots/plot_map_ecoregion2.png", width=7, height = 5, units = "in")
+      text_family = "ArcherPro Book")) +
+  ggspatial::annotation_scale()
+ggsave("VP/severity_tmp/plots/plot_map_ecoregion3.png", width=7, height = 5, units = "in")
 
 
 
