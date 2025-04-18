@@ -3,7 +3,7 @@ library(dplyr)
 library(ggplot2)
 
 # Merge with original data
-ardcoords <- vect("VP/severity_tmp/data/saved/ARD_08262024.gpkg")
+ardcoords <- vect("VP/severity_tmp/data/saved/ARD_01212025.gpkg")
 full_model_results <- read.csv("VP/severity_tmp/data/saved/outputs/ranger_cv_results.csv")
 
 ard <- read.csv("VP/severity_tmp/data/saved/ARD_nocoords.csv")
@@ -15,16 +15,16 @@ names(ardcoords)
 #names(full_model_results)[1] <- "UniqueID"
 names(full_model_results)
 # make model results into a spatvector
-rfcoords <- merge(ardcoords[, "UniqueID"], full_model_results, by = "UniqueID")
+rfcoords <- merge(ardcoords[, c("UniqueID", "ecoregion")], full_model_results, by = "UniqueID")
 
 
 ## extract ecoregion
-ecoregions <- vect("VP/severity_tmp/data/Ecoregions2017/Ecoregions2017.shp")
-ecoregions <- ecoregions[ecoregions$REALM=="Nearctic",]
-ecoregions
+#ecoregions <- vect("VP/severity_tmp/data/Ecoregions2017/Ecoregions2017.shp")
+#ecoregions <- ecoregions[ecoregions$REALM=="Nearctic",]
+#ecoregions
 
 
-biome_info <- terra::extract(ecoregions[, "ECO_NAME"], rfcoords)
+#biome_info <- terra::extract(ecoregions[, "ECO_NAME"], rfcoords)
 
 # Make new ardcoords file with ecoregion
 #neward <- terra::extract(ecoregions[, "ECO_NAME"], ardcoords)
@@ -33,26 +33,21 @@ biome_info <- terra::extract(ecoregions[, "ECO_NAME"], rfcoords)
 #writeVector(ardcoords, "VP/severity_tmp/data/saved/ARD_01212025.gpkg") # ARD with ecoregion
 #head(biome_info)
 
-rfcoords <- cbind(rfcoords, biome_info)
+#rfcoords <- cbind(rfcoords, biome_info)
 
-table(rfcoords$ECO_NAME)
+table(rfcoords$ecoregion)
 ## replace some
-rfcoords$ECO_NAME <- ifelse(rfcoords$ECO_NAME=="California interior chaparral and woodlands", "Klamath-Siskiyou forests", rfcoords$ECO_NAME)
-rfcoords$ECO_NAME <- ifelse(rfcoords$ECO_NAME=="Great Basin shrub steppe", "Sierra Nevada forests", rfcoords$ECO_NAME)
-
-
-#head(rfcoords)
-#table(rfcoords$ECO_NAME)
-rfcoords$id.y <- NULL
+rfcoords$ecoregion <- ifelse(rfcoords$ecoregion=="California interior chaparral and woodlands", "Klamath-Siskiyou forests", rfcoords$ecoregion)
+rfcoords$ecoregion <- ifelse(rfcoords$ecoregion=="Great Basin shrub steppe", "Sierra Nevada forests", rfcoords$ecoregion)
 
 
 # Calculate R² for each ECO_NAME
 r2_table <- as.data.frame(rfcoords) %>%
-  group_by(ECO_NAME) %>%
+  group_by(ecoregion) %>%
   summarise(R2 = caret::R2(obs, pred), n_rows = n())
 r2_table
 
-rfcoords$ECO_NAME <- ifelse(rfcoords$ECO_NAME=="Colorado Plateau shrublands", "Wasatch and Uinta montane forests", rfcoords$ECO_NAME)
+rfcoords$ecoregion <- ifelse(rfcoords$ecoregion=="Colorado Plateau shrublands", "Wasatch and Uinta montane forests", rfcoords$ecoregion)
 rfeco <- as.data.frame(rfcoords)
 ggplot(rfeco) +
   geom_point(aes(x=obs, y=pred), alpha=.6) +
