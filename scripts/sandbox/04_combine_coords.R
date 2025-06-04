@@ -82,6 +82,21 @@ allcoords <- allcoords[allcoords$FireYear >= 1993,]
 allcoords <- allcoords[!is.na(allcoords$pcnt_ba_mort),]
 allcoords <- allcoords[!is.na(allcoords$lat_wgs84),]
 
+
+
+
+## New for v7 (moved from later scripts for cleanliness)
+
+allcoords <- allcoords[allcoords$PlotID != "Wallow9_1_118",]
+
+allcoords$UniqueID <- paste0(allcoords$Dataset, "_", allcoords$PlotID)
+
+allcoords[allcoords$Dataset=="Hood",]$UniqueID <- 
+  paste0(allcoords[allcoords$Dataset=="Hood",]$UniqueID, "_", substring(allcoords[allcoords$Dataset=="Hood",]$YrFireName, 8))
+allcoords[allcoords$Dataset=="Davis",]$UniqueID <- 
+  paste0(allcoords[allcoords$Dataset=="Davis",]$UniqueID, "_", substring(allcoords[allcoords$Dataset=="Davis",]$YrFireName, 8))
+
+### Spatial part
 # create shapefile
 vcoords <- vect(allcoords, geom=c("lon_wgs84", "lat_wgs84"), crs="epsg:4326")
 sfcoords <- st_as_sf(x = allcoords,                         
@@ -101,10 +116,9 @@ names(days)
 vcoords$Start_Day <- days$img_season_start
 vcoords$End_Day <- days$img_season_end
 
+write.csv(allcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v7.csv", row.names = FALSE)
+writeVector(vcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v7.shp", overwrite = TRUE)
 
-
-write.csv(allcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v6.csv", row.names = FALSE)
-writeVector(vcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v6.shp", overwrite = TRUE)
 
 ## for splitting the data into two parts
 #vcoords

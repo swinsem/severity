@@ -1,4 +1,8 @@
 
+data_dir <- "research/severity/data/"
+data_dir1 <- "VP/severity_tmp/data/saved/"
+
+
 # Random forest cross validation
 library(ranger)
 

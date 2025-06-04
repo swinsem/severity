@@ -2,6 +2,10 @@ library(terra)
 library(dplyr)
 library(ggplot2)
 
+data_dir <- "research/severity/data/"
+data_dir1 <- "VP/severity_tmp/data/saved/"
+
+
 # Merge with original data
 ardcoords <- vect("VP/severity_tmp/data/saved/ARD_01212025.gpkg")
 full_model_results <- read.csv("VP/severity_tmp/data/saved/outputs/ranger_cv_results.csv")
