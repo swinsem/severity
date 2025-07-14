@@ -8,6 +8,8 @@ library(glue)
 data_dir <- "research/severity/data/"
 data_dir1 <- "VP/severity_tmp/data/saved/"
 
+fileap <- "ravg_test"
+
 ### to do:
 ## remove NPS plots from GEE code
 ## include fuzzed NPS locations below when making spatial ARD
@@ -16,7 +18,7 @@ data_dir1 <- "VP/severity_tmp/data/saved/"
 ################# Spectral data ##################
 ##########################################################
 
-spectral <- read.csv(paste0(data_dir, "input/spectral_05282025.csv"))
+spectral <- read.csv(paste0(data_dir, "input/spectral_", fileap, ".csv"))
 
 spectral$system.index <- NULL
 spectral$.geo <- NULL
@@ -26,7 +28,7 @@ spectral$.geo <- NULL
 ################# Terraclimate ##################
 ##########################################################
 
-climate <- read.csv(paste0(data_dir, "input/climate_05282025.csv"))
+climate <- read.csv(paste0(data_dir, "input/climate_", fileap, ".csv"))
 
 climate$system.index <- NULL
 climate$.geo <- NULL
@@ -36,7 +38,7 @@ climate$.geo <- NULL
 ################# Topography ##################
 ##########################################################
 
-topo <- read.csv(paste0(data_dir, "input/topo_05282025.csv"))
+topo <- read.csv(paste0(data_dir, "input/topo_", fileap, ".csv"))
 
 topo$system.index <- NULL
 topo$.geo <- NULL
@@ -45,10 +47,12 @@ topo$.geo <- NULL
 ##########################################################
 ################# Merge datasets ##################
 ##########################################################
+# merge parameters for original dataset: (note startDay and endDay changed)
+# by=c("UniqueID", "PlotID", "Dataset", "FireYear", "Start_Day", "End_Day", "Unit", "ID", "YrFireName", "pcnt_ba_mo")
 
-allgee <- merge(spectral, climate, by=c("UniqueID", "PlotID", "Dataset", "FireYear", "Start_Day", "End_Day", "Unit", "ID", "YrFireName", "pcnt_ba_mo"))
+allgee <- merge(spectral, climate, by=c("UniqueID", "FireYear", "pcnt_ba_mo", "Fire"))
 
-allgee <- merge(allgee, topo, by=c("UniqueID", "PlotID", "Dataset", "FireYear", "Start_Day", "End_Day", "Unit", "ID", "YrFireName", "pcnt_ba_mo"))
+allgee <- merge(allgee, topo, by=c("UniqueID", "FireYear", "pcnt_ba_mo", "Fire"))
 
 
 allgee$aspectRad <- NULL
@@ -70,21 +74,26 @@ duplicates_count
 ard <- allgee[,!names(allgee) %in% c("FireYear", "Start_Day", "End_Day", "Unit", "ID")]
 
 ### Write ARD dataframe without coords
-write.csv(ard, paste0(data_dir, "saved/ARD_nocoords_06042025.csv"), row.names = FALSE)
+# write.csv(ard, paste0(data_dir, "saved/ARD_nocoords_06042025.csv"), row.names = FALSE)
+write.csv(ard, paste0(data_dir, "saved/ARD_", fileap, ".csv"), row.names = FALSE)
 
 
 ##### ARD with plot locations and ecoregion #####
 
 # point location data
+coords <- terra::vect(paste0(data_dir, "RAVG_test.shp")) 
 coords <- vect(paste0(data_dir, "input/allcoords_withbaloss_v7.shp")) 
 
 # combine 
 ardcoords <- merge(coords, ard, by=c("UniqueID", "PlotID", "YrFireName", "Dataset", "pcnt_ba_mo"))
+ardcoords <- terra::merge(coords, ard, by=c("UniqueID", "pcnt_ba_mo", "Fire"))
+
 ardcoords
 
 names(ardcoords)
 
-ardcoords <- ardcoords[,!names(ardcoords) %in% c("FireYear", "Start_Day", "End_Day", "Unit", "ID")]
+ardcoords <- ardcoords[,!names(ardcoords) %in% c("FireYear", "Start_Day", "End_Day", "Unit", "ID", "Fire")]
+terra::writeVector(ardcoords, paste0(data_dir, "saved/ARD_", fileap, ".gpkg"))
 
 ## extract ecoregion
 ecoregions <- vect(paste0(data_dir, "input/Ecoregions2017/Ecoregions2017.shp"))

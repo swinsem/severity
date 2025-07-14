@@ -155,3 +155,23 @@ rfcoords <- merge(ardcoords[, c("UniqueID", "ecoregion")], cv_results, by = "Uni
 names(rfcoords)
 writeVector(rfcoords, paste0(data_dir, "saved/ranger_cv_results.gpkg"))
 
+##### 
+##### SAVE THE MODEL #####
+ard_df = ard |> 
+  sf::st_drop_geometry()
+
+# Fit on all data
+final_mod <- ranger::ranger(
+  formula = as.formula(best_fit$important_variable_rf_formula),
+  data = ard_df,
+  num.trees = 1000,
+  mtry = best_fit$mtry,
+  min.node.size = best_fit$min.node.size,
+  sample.fraction = best_fit$sample.fraction,
+  seed = 20250709
+)
+
+# 2) Save it once
+saveRDS(final_mod, file = file.path(data_dir, "rf_final_model.rds"))
+
+
