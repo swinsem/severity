@@ -9,7 +9,6 @@ library(cpi)
 library(caret)
 library(rPref)
 library(ranger)
-library(mlr3verse)
 
 set.seed(20250121)
 
@@ -107,7 +106,7 @@ ard_with_spatial_folds_by_ecoregion <- ard_for_task_by_ecoregion |>
 ard_with_spatial_folds <- c(
   ard_with_spatial_folds_global, 
   ard_with_spatial_folds_by_ecoregion
-  )
+)
 
 # All possible hyperparameters and input data
 hyperparameters_full <-
@@ -140,7 +139,10 @@ future::plan(future::multisession, workers = 10)
 results_list = furrr::future_pmap(
   .l = hyperparameters, 
   .progress = TRUE,
-  .options = furrr::furrr_options(seed = TRUE),
+  .options = furrr::furrr_options(
+    seed = TRUE, 
+    packages = c("mlr3verse", "cpi", "ranger")
+  ),
   .f = tune_validate_varselect_assess,
   resampling_approach = "resampler"
 )
