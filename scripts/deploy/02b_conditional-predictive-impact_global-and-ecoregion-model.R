@@ -117,7 +117,7 @@ hyperparameters_full <-
     minLeafPopulation = c(1, 5, 10, 25, 50, 60, 70, 80, 90, 100, 125, 150),
     ard_with_spatial_folds = ard_with_spatial_folds
   ) |> 
-  dplyr::arrange(ecoregion, minLeafPopulation, bagFraction, variablesPerSplit)
+  dplyr::arrange(domain, minLeafPopulation, bagFraction, variablesPerSplit)
 
 # hyperparameters = hyperparameters_full[sample(x = 1:nrow(hyperparameters_full), size = 10), ]
 hyperparameters <- hyperparameters_full
