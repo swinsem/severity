@@ -150,7 +150,7 @@ results = data.table::rbindlist(results_list)
 
 out_fname <- glue::glue(
   "data/interim/",
-  "conditional-predictive-impact-results_{cpi_results_version}_ecoregion.csv"
+  "conditional-predictive-impact-results_{cpi_results_version}.csv"
 )
 
 dir.create(dirname(out_fname), recursive = TRUE, showWarnings = FALSE)
