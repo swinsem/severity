@@ -103,7 +103,7 @@ ard_with_spatial_folds_by_ecoregion <- ard_for_task_by_ecoregion |>
 
 # Combine the global analysis-ready data (which includes its spatial folds already
 # set up with the ecoregion-specific data with its spatial folds already set up)
-ard_with_spatial_folds <- c(
+ard_with_spatial_folds_list <- c(
   ard_with_spatial_folds_global, 
   ard_with_spatial_folds_by_ecoregion
 )
@@ -114,7 +114,7 @@ hyperparameters_full <-
     variablesPerSplit = 3:12, 
     bagFraction = c(0.4, 0.5, (1 - 1/exp(1)), 0.7, 0.8, 0.9),
     minLeafPopulation = c(1, 5, 10, 25, 50, 60, 70, 80, 90, 100, 125, 150),
-    ard_with_spatial_folds = ard_with_spatial_folds
+    ard_with_spatial_folds_list = ard_with_spatial_folds_list
   ) |> 
   dplyr::arrange(minLeafPopulation, bagFraction, variablesPerSplit)
 
@@ -122,15 +122,15 @@ hyperparameters_full <-
 hyperparameters <- hyperparameters_full
 
 # Test one hyperparameter combination for a given input domain
-idx <- 1
-
-test_out = tune_validate_varselect_assess(
-  variablesPerSplit = hyperparameters$variablesPerSplit[idx],
-  bagFraction = hyperparameters$bagFraction[idx],
-  minLeafPopulation = hyperparameters$minLeafPopulation[idx],
-  resampling_approach = "resampler",
-  ard_with_spatial_folds = hyperparameters$ard_with_spatial_folds[idx] 
-)
+# idx <- 1
+# 
+# test_out = tune_validate_varselect_assess(
+#   variablesPerSplit = hyperparameters$variablesPerSplit[idx],
+#   bagFraction = hyperparameters$bagFraction[idx],
+#   minLeafPopulation = hyperparameters$minLeafPopulation[idx],
+#   resampling_approach = "resampler",
+#   ard_with_spatial_folds = hyperparameters$ard_with_spatial_folds[idx] 
+# )
 
 # # Define the learner to be a {ranger} regression and give it the tuned hyperparameters
 tictoc::tic()
