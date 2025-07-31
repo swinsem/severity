@@ -2,8 +2,10 @@ source("scripts/deploy/02a_conditional-predictive-impact-functions.R")
 
 cpi_results_version <- "v6.0"
 
+# install from patched version which allows custom resamplers
+# See https://github.com/bips-hb/cpi/pull/22
 # unloadNamespace("cpi")
-# remotes::install_github(repo = "mikoontz/cpi@resampling-fix") # install from patched version which allows custom resamplers
+# remotes::install_github(repo = "mikoontz/cpi@resampling-fix") 
 
 set.seed(20250121)
 
@@ -20,7 +22,12 @@ ard$y_4326 <- sf::st_coordinates(ard)[, "Y"]
 # The features (i.e., the predictors)
 features <- ard |> 
   sf::st_drop_geometry() |> 
-  dplyr::select(-c(PlotID, YrFireName, Dataset, pcnt_ba_mo, UniqueID, ecoregion, x_4326, y_4326)) |> 
+  dplyr::select(
+    -c(
+      PlotID, YrFireName, Dataset, pcnt_ba_mo, 
+      UniqueID, ecoregion, x_4326, y_4326
+    )
+  ) |> 
   colnames()
 
 # The target (i.e., response variable)
@@ -96,8 +103,8 @@ ard_with_spatial_folds_by_ecoregion <- ard_for_task_by_ecoregion |>
     }
   )
 
-# Combine the global analysis-ready data (which includes its spatial folds already
-# set up with the ecoregion-specific data with its spatial folds already set up)
+# Combine the global analysis-ready data with the ecoregion-specific (both
+# of which already have their spatial folds set up)
 ard_with_spatial_folds <- tibble::tibble(
   ard = c(
     ard_with_spatial_folds_global, 
@@ -128,7 +135,8 @@ hyperparameters <-
 #   domain = hyperparameters$domain[[idx]]
 # )
 
-# # Define the learner to be a {ranger} regression and give it the tuned hyperparameters
+# Define the learner to be a {ranger} regression and give it the 
+# tuned hyperparameters
 tictoc::tic()
 future::plan(future::multisession, workers = 10)
 results_list = furrr::future_pmap(
