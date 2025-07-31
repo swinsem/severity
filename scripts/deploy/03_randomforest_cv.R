@@ -59,8 +59,6 @@ features = ard |>
 target = "pcnt_ba_mo"
 
 
-## using top_results from other script
-best_fit = top_results[2,]
 
 
 spatial_folds = unique(ard_with_spatial_folds$spatial_fold)
@@ -138,7 +136,7 @@ cv_results$pred_bin <- ifelse(cv_results$pred < .25, 1,
 cv_results$obs_bin <- ifelse(cv_results$obs < .25, 1,  
                                  ifelse(cv_results$obs >=.25 & cv_results$obs < .75, 2, 3))
 
-## five classes - overwrite above
+## five classes - overwrites above
 cv_results$pred_bin <- ifelse(cv_results$pred < .25, 1, 
                                       ifelse(cv_results$pred >=.25 & cv_results$pred < .5, 2, 
                                              ifelse(cv_results$pred >=.5 & cv_results$pred < .75, 3, 
