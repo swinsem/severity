@@ -140,7 +140,7 @@ hyperparameters <-
 tictoc::tic()
 future::plan(future::multisession, workers = 10)
 results_list = furrr::future_pmap(
-  .l = hyperparameters[1, ], 
+  .l = hyperparameters, 
   .progress = TRUE,
   .options = furrr::furrr_options(
     seed = TRUE, 
