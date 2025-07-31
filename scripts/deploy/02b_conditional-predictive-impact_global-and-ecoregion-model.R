@@ -2,13 +2,8 @@ source("scripts/deploy/02a_conditional-predictive-impact-functions.R")
 
 cpi_results_version <- "v6.0"
 
-library(ggplot2)
 # unloadNamespace("cpi")
 # remotes::install_github(repo = "mikoontz/cpi@resampling-fix") # install from patched version which allows custom resamplers
-library(cpi)
-library(caret)
-library(rPref)
-library(ranger)
 
 set.seed(20250121)
 
@@ -103,41 +98,41 @@ ard_with_spatial_folds_by_ecoregion <- ard_for_task_by_ecoregion |>
 
 # Combine the global analysis-ready data (which includes its spatial folds already
 # set up with the ecoregion-specific data with its spatial folds already set up)
-ard_with_spatial_folds_list <- c(
-  ard_with_spatial_folds_global, 
-  ard_with_spatial_folds_by_ecoregion
+ard_with_spatial_folds <- tibble::tibble(
+  ard = c(
+    ard_with_spatial_folds_global, 
+    ard_with_spatial_folds_by_ecoregion
+  ),
+  domain = names(ard)
 )
 
 # All possible hyperparameters and input data
-hyperparameters_full <-
+hyperparameters <-
   tidyr::expand_grid(
     variablesPerSplit = 3:12, 
     bagFraction = c(0.4, 0.5, (1 - 1/exp(1)), 0.7, 0.8, 0.9),
     minLeafPopulation = c(1, 5, 10, 25, 50, 60, 70, 80, 90, 100, 125, 150),
-    ard_with_spatial_folds_list = ard_with_spatial_folds_list
+    ard_with_spatial_folds
   ) |> 
-  dplyr::arrange(minLeafPopulation, bagFraction, variablesPerSplit)
-
-# hyperparameters = hyperparameters_full[sample(x = 1:nrow(hyperparameters_full), size = 10), ]
-hyperparameters <- hyperparameters_full
+  dplyr::arrange(domain, minLeafPopulation, bagFraction, variablesPerSplit)
 
 # Test one hyperparameter combination for a given input domain
 # idx <- 1
 # 
 # test_out = tune_validate_varselect_assess(
-#   variablesPerSplit = hyperparameters$variablesPerSplit[idx],
-#   bagFraction = hyperparameters$bagFraction[idx],
-#   minLeafPopulation = hyperparameters$minLeafPopulation[idx],
+#   variablesPerSplit = hyperparameters$variablesPerSplit[[idx]],
+#   bagFraction = hyperparameters$bagFraction[[idx]],
+#   minLeafPopulation = hyperparameters$minLeafPopulation[[idx]],
 #   resampling_approach = "resampler",
-#   ard_with_spatial_folds = hyperparameters$ard_with_spatial_folds[idx] 
+#   ard = hyperparameters$ard[[idx]],
+#   domain = hyperparameters$domain[[idx]]
 # )
 
 # # Define the learner to be a {ranger} regression and give it the tuned hyperparameters
 tictoc::tic()
 future::plan(future::multisession, workers = 10)
-# future::plan("sequential")
 results_list = furrr::future_pmap(
-  .l = hyperparameters, 
+  .l = hyperparameters[1, ], 
   .progress = TRUE,
   .options = furrr::furrr_options(
     seed = TRUE, 

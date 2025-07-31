@@ -52,8 +52,11 @@ unpack_rsample_splits <- function(id, splits) {
 #' @param minLeafPopulation ranger random forest hyperparameter
 #' @param resampling_approach One of "resampling" or "oob" to determine how
 #' the conditional predictive impact works
-#' @param ard_with_spatial_folds_list A one element list of the data to be
-#' used for modeling
+#' @param ard A tibble representing the data to be modeled; must have already
+#' been divided up into proper spatial folds with a factor attribute that
+#' represents factor level/spatial fold membership
+#' @param domain The name of the region that the `ard` data represent (either
+#' 'western-us' or one of the ecoregions)
 #' @returns A tibble with the result of every variables conditional predictive
 #' impact for the given hyperparameter combination and input data
 #' 
@@ -61,11 +64,8 @@ tune_validate_varselect_assess <- function(variablesPerSplit,
                                            bagFraction, 
                                            minLeafPopulation, 
                                            resampling_approach,
-                                           ard_with_spatial_folds_list) {
-  
-  # ard_with_spatial_folds <- ard_with_spatial_folds_by_ecoregion[[ecoregion]]
-  domain <- names(ard_with_spatial_folds_list)
-  ard_with_spatial_folds <- ard_with_spatial_folds_list[[1]]
+                                           ard,
+                                           domain) {
   
   # Set up the leaner with the (currently) 3 hyperparameters
   learner_sev_biomass <- mlr3::lrn(
@@ -83,7 +83,7 @@ tune_validate_varselect_assess <- function(variablesPerSplit,
   task_sev_biomass <-
     mlr3::as_task_regr(
       x = as.formula(full_rf_formula),
-      data = ard_with_spatial_folds[, c(target, features)],
+      data = ard[, c(target, features)],
       id = target
     )
   
@@ -92,7 +92,7 @@ tune_validate_varselect_assess <- function(variablesPerSplit,
   resampler_sev_biomass <- rsmp("custom_cv")
   resampler_sev_biomass$instantiate(
     task_sev_biomass, 
-    f = ard_with_spatial_folds$spatial_fold
+    f = ard$spatial_fold
   )
   
   if (resampling_approach == "resampler") {
@@ -179,14 +179,14 @@ tune_validate_varselect_assess <- function(variablesPerSplit,
     # Set up the task using the formula notation with the full set of predictors
     task_sev_biomass_important_variables <- mlr3::as_task_regr(
       x = as.formula(important_variable_rf_formula),
-      data = ard_with_spatial_folds[, c(target, important_variables)],
+      data = ard[, c(target, important_variables)],
       id = target
     )
     
     resampler_sev_biomass_important_variables <- rsmp("custom_cv")
     resampler_sev_biomass_important_variables$instantiate(
       task_sev_biomass_important_variables, 
-      f = ard_with_spatial_folds$spatial_fold
+      f = ard$spatial_fold
     )
     
     # Spatially cross validated model assessment the {mlr3} way
