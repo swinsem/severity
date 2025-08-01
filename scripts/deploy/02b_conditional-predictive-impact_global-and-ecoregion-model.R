@@ -11,7 +11,7 @@ set.seed(20250121)
 
 # read data and set up spatial folds
 # https://spatialsample.tidymodels.org/articles/spatialsample.html
-ard <- sf::st_read("data/ARD_01212025.gpkg") |>
+ard <- sf::st_read("data/ard/ARD_01212025.gpkg") |>
   dplyr::filter(!is.na(pcnt_ba_mo)) |> 
   dplyr::select(-lat, -aspectRad)
 
@@ -154,7 +154,7 @@ tictoc::toc()
 results = data.table::rbindlist(results_list)
 
 out_fname <- glue::glue(
-  "data/interim/",
+  "data/processed/",
   "conditional-predictive-impact-results_{cpi_results_version}.csv"
 )
 
