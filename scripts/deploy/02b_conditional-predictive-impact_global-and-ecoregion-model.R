@@ -11,9 +11,8 @@ set.seed(20250121)
 
 # read data and set up spatial folds
 # https://spatialsample.tidymodels.org/articles/spatialsample.html
-ard <- sf::st_read("data/ard/ARD_01212025.gpkg") |>
-  dplyr::filter(!is.na(pcnt_ba_mo)) |> 
-  dplyr::select(-lat, -aspectRad)
+ard <- sf::st_read("data/ard/ARD_20250804.gpkg") |>
+  dplyr::filter(!is.na(pcnt_ba_mo)) 
 
 ard$x_4326 <- sf::st_coordinates(ard)[, "X"]
 ard$y_4326 <- sf::st_coordinates(ard)[, "Y"]
@@ -24,7 +23,7 @@ features <- ard |>
   sf::st_drop_geometry() |> 
   dplyr::select(
     -c(
-      PlotID, YrFireName, Dataset, pcnt_ba_mo, 
+      Fire, FireYear, pcnt_ba_mo, 
       UniqueID, ecoregion, x_4326, y_4326
     )
   ) |> 
