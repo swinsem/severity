@@ -1,4 +1,4 @@
-cpi_results_version <- "v6.0"
+cpi_results_version <- "v7.0"
 
 cpi_results_fname <- glue::glue(
   "data/processed/",

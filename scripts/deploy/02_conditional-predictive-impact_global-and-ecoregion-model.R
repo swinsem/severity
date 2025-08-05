@@ -1,6 +1,6 @@
 source("./R/utils.R")
 
-cpi_results_version <- "v6.0"
+cpi_results_version <- "v7.0"
 
 # install from patched version which allows custom resamplers
 # See https://github.com/bips-hb/cpi/pull/22
