@@ -43,12 +43,12 @@ spectral$system.index <- NULL
 spectral$.geo <- NULL
 
 ################# Terraclimate ##################
-climate <- read.csv(paste0(data_dir, "input/climate_", fileap, ".csv"))
+climate <- read.csv(paste0(data_dir, "input/climate_", filename, ".csv"))
 climate$system.index <- NULL
 climate$.geo <- NULL
 
 ################# Topography ##################
-topo <- read.csv(paste0(data_dir, "input/topo_", fileap, ".csv"))
+topo <- read.csv(paste0(data_dir, "input/topo_", filename, ".csv"))
 topo$system.index <- NULL
 topo$.geo <- NULL
 
@@ -100,7 +100,7 @@ set.seed(20250711)
 preds <- predict(final_mod, data = ard)$predictions
 results <- cbind(ard, pred = preds)
 
-
+R2 = 1 - var(pcnt_ba_mo - pred) / var(pcnt_ba_mo)
 
 ### assess outputs with R2
 caret::R2(results$pcnt_ba_mo, results$pred) # 0.516

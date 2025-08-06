@@ -1,3 +1,4 @@
+source("./R/utils.R")
 
 # Random forest cross validation
 
@@ -7,8 +8,9 @@ data_dir <- "research/severity/data/"
 fig_dir <- "research/severity/figs/"
 
 
+
 # Read data
-cpi_results_full = data.table::fread(paste0(data_dir, "saved/conditional-predictive-impact-results_v4.0.csv"))
+cpi_results_full = data.table::fread(paste0(data_dir, "saved/conditional-predictive-impact-results_v7.0.csv"))
 
 cpi_results = cpi_results_full |>
   dplyr::select(-Variable, -CPI, -SE, -test, -statistic, -estimate, -p.value, -ci.lo) |>
@@ -24,32 +26,16 @@ top_results = r2_pareto_front |> na.omit()
 
 best_fit = top_results[2,]
 
-### ideally the following will match the CPI code so the folds are the same?
 
-# read data and set up spatial folds
-# https://spatialsample.tidymodels.org/articles/spatialsample.html
-ard = sf::st_read(paste0(data_dir, "saved/ARD_06042025.gpkg")) |>
-  dplyr::filter(!is.na(pcnt_ba_mo)) 
+####
+here::here()
+filename <- "20250804"
 
-set.seed(20240724)
-
-ard_for_task = ard |> 
-  spatialsample::spatial_clustering_cv(v = 10)
-
-ard_with_spatial_folds = ard_for_task |>
-  purrr::pmap(.f = function(id, splits) {
-    
-    spatial_fold <- id
-    assessment_data =
-      splits |>
-      rsample::assessment() |>
-      sf::st_drop_geometry()
-    
-    return(cbind(assessment_data, spatial_fold))
-  }) |>
-  data.table::rbindlist() |>
-  dplyr::mutate(spatial_fold = factor(spatial_fold)) |>
-  tibble::as_tibble()
+ard_with_spatial_folds_fname <- here::here(
+  glue::glue("data/ARD_{filename}_with-spatial-folds.csv")
+)
+ard = read.csv(paste0(data_dir, "saved/ARD_20250804_with-spatial-folds.gpkg")) 
+spatfolds = read.csv()
 
 features = ard |> 
   sf::st_drop_geometry() |> 
