@@ -1,3 +1,4 @@
+source("./R/utils.R")
 
 # Get n plots and R2 for general model (Table 1)
 # Plot Figure 2
@@ -11,28 +12,29 @@ library(reshape2)
 library(caret)
 
 data_dir <- "research/severity/data/"
-data_dir1 <- "VP/severity_tmp/data/saved/"
 
 # Read cross-validation results with locations
-rfcoords <- vect(paste0(data_dir, "saved/ranger_cv_results.gpkg"))
+cv_results <- read.csv(paste0(data_dir, "saved/ranger_cv_results.csv"))
 
 # Number of plots per ecoregion (before combining)
-table(rfcoords$ecoregion)
+table(cv_results$ecoregion)
 
 # Recategorize some
-rfcoords$ecoregion <- ifelse(rfcoords$ecoregion=="California interior chaparral and woodlands", "Klamath-Siskiyou forests", rfcoords$ecoregion)
-rfcoords$ecoregion <- ifelse(rfcoords$ecoregion=="Great Basin shrub steppe", "Sierra Nevada forests", rfcoords$ecoregion)
+cv_results$ecoregion <- ifelse(cv_results$ecoregion=="California interior chaparral and woodlands", "Klamath-Siskiyou forests", cv_results$ecoregion)
+cv_results$ecoregion <- ifelse(cv_results$ecoregion=="Great Basin shrub steppe", "Sierra Nevada forests", cv_results$ecoregion)
 
 
 # Calculate R2 for each ecoregion - Table 1
-r2_table <- as.data.frame(rfcoords) %>%
+r2_table <- as.data.frame(cv_results) %>%
   group_by(ecoregion) %>%
-  summarise(R2 = caret::R2(obs, pred), n_rows = n())
+  summarise(R2 = coef_of_determin(obs, pred), n_rows = n())
 r2_table
 
 
-rfcoords$ecoregion <- ifelse(rfcoords$ecoregion=="Colorado Plateau shrublands", "Wasatch and Uinta montane forests", rfcoords$ecoregion)
-rfeco <- as.data.frame(rfcoords)
+cv_results$ecoregion <- ifelse(cv_results$ecoregion=="Colorado Plateau shrublands", "Wasatch and Uinta montane forests", cv_results$ecoregion)
+
+# already a df?
+rfeco <- as.data.frame(cv_results)
 
 #### Plot Figure 2 ####
 ggplot(rfeco) +
@@ -45,7 +47,7 @@ ggplot(rfeco) +
   xlab("Observed BA loss") +
   facet_wrap(~ ecoregion, scales = "free", 
              labeller = label_wrap_gen(width = 20))
-ggsave("VP/severity_tmp/plots/rf_pred_by_ecoregion2.png", width = 8, height = 9, units = "in")
+ggsave("VP/severity_tmp/plots/rf_pred_by_ecoregion3.png", width = 8, height = 9, units = "in")
 
 
 ## Correlation between R2 and number of plots
@@ -65,8 +67,6 @@ interactive_plot
 ####### obs vs pred, class stats #######
 #########################################
 
-# Read CV results
-cv_results <- read.csv(paste0(data_dir, "saved/ranger_cv_results.csv"))
 
 ### Plotting obs vs pred
 # Both continuous

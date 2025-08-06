@@ -312,3 +312,58 @@ tune_validate_varselect_assess <- function(variablesPerSplit,
   
   out
 }
+
+
+#' @description
+#' Performs a cross-validation of a ranger random forest model
+#' @param data 
+#' @param hyperparameters A tibble representing the hyperparameter values to use
+#' for the random forest model
+#' @returns A tibble with each row representing the observed percent basal area
+#' loss for one observation and the model prediction using a model trained on
+#' all the data not belonging to the observation's spatial fold
+
+cross_validate <- function(data, hyperparameters) {
+  results <- list() 
+  
+  spatial_folds <- unique(data$spatial_fold)
+  
+  for(i in seq_along(spatial_folds)) {
+    
+    train_data = data |> 
+      dplyr::filter(spatial_fold != spatial_folds[i])
+    
+    test_data = data |> 
+      dplyr::filter(spatial_fold == spatial_folds[i])
+    
+    fm = ranger::ranger(
+      formula = as.formula(hyperparameters$important_variable_rf_formula), 
+      data = train_data, 
+      num.trees = 1000, 
+      mtry = hyperparameters$mtry, 
+      min.node.size = hyperparameters$min.node.size, 
+      sample.fraction = hyperparameters$sample.fraction
+    )
+    # Store results with UniqueID and BA loss
+    fold_results <- data.frame(
+      unique_id = test_data$UniqueID,  
+      obs = test_data$pcnt_ba_mo,  
+      pred = predict(object = fm, data = test_data)$predictions,
+      fold = i  
+    )
+    
+    # Append to the list of results
+    results[[i]] <- fold_results
+  }
+  
+  # Combine all fold results into a single data frame
+  combined_results <- do.call(rbind, results)
+  
+  # Check for potential mismatches
+  if (any(is.na(combined_results$obs) | is.na(combined_results$pred))) {
+    warning("NA values found in observations or predictions.")
+  }
+  
+  combined_results
+  
+}

@@ -4,7 +4,11 @@
 
 library(ggplot2)
 
-cpi_results_er = data.table::fread(paste0(data_dir, "saved/conditional-predictive-impact-results_v5.1.csv"))
+
+cpi_results_full = data.table::fread(paste0(data_dir, "saved/conditional-predictive-impact-results_v7.0.csv"))
+
+## filter to ecoregion models
+cpi_results_er = cpi_results_full[cpi_results_full$domain != "western-us", ]
 names(cpi_results_er)
 
 lowest_rmse <- cpi_results_er %>%
