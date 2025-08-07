@@ -44,7 +44,6 @@ ard <- readr::read_csv(
 
 ard_west <- ard[ard$domain=="western-us",]
 
-
 ##### cross-validation #####
 
 # Run CV function
@@ -60,7 +59,6 @@ head(cv_results)
 coef_of_determin(obs=cv_results$obs, pred=cv_results$pred)
 caret::RMSE(obs=cv_results$obs, pred=cv_results$pred)
 caret::MAE(obs=cv_results$obs, pred=cv_results$pred)
-
 
 ### Categorical binning
 
@@ -121,5 +119,3 @@ saveRDS(
   object = final_mod, 
   file = here::here("data/rf_final_model.rds")
 )
-
-

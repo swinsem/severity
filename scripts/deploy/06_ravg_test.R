@@ -89,8 +89,10 @@ ardcoords$ecoregion <- biome_info$ECO_NAME
 # save ARD
 writeVector(ardcoords, paste0(data_dir, "saved/ARD_", filename, ".gpkg"))
 
+
+
 # load data (if picking up later on)
-#ard_new <- read.csv(paste0(data_dir, "saved/ARD_", fileap, ".csv"))
+ard <- read.csv(paste0(data_dir, "saved/ARD_", fileap, ".csv"))
 
 # load model as rds
 final_mod <- readRDS(paste0(data_dir, "rf_final_model.rds"))
@@ -104,8 +106,9 @@ R2 = 1 - var(pcnt_ba_mo - pred) / var(pcnt_ba_mo)
 
 ### assess outputs with R2
 caret::R2(results$pcnt_ba_mo, results$pred) # 0.516
+1 - var(results$pcnt_ba_mo - results$pred) / var(results$pcnt_ba_mo)
 
-# calculate R2 for each ecoregion 
+# calculate R2 for each ecoregion if there are multiple in the dataset
 results <- merge(results, ardcoords[,c("UniqueID", "ecoregion")], by="UniqueID")
 r2_table <- as.data.frame(results) %>%
   group_by(ecoregion) %>%
