@@ -22,7 +22,7 @@ cpi_results = cpi_results_full |>
 # Plot Pareto frontier of cross-fold mean R2 and overall R2 of important variable reduced model
 r2_pareto_front = rPref::psel(
   df = cpi_results,
-  pref = rPref::high(r2_important_variables_overall) * rPref::high(r2_important_variables)
+  pref = rPref::high(r2_important_variables_overall) * rPref::high(r2_mean_important_variables)
 )
 
 top_results = r2_pareto_front |> na.omit()
@@ -31,7 +31,6 @@ best_fit = top_results[2,]
 
 
 #### read ard with spatial folds from github severity/data folder
-here::here()
 filename <- "20250804"
 
 ard_with_spatial_folds_fname <- here::here(
@@ -66,20 +65,33 @@ caret::MAE(obs=cv_results$obs, pred=cv_results$pred)
 ### Categorical binning
 
 ## three classes (Miller et al 2009)
-cv_results$pred_bin <- ifelse(cv_results$pred < .25, 1, 
-                                  ifelse(cv_results$pred >=.25 & cv_results$pred < .75, 2, 3))
-cv_results$obs_bin <- ifelse(cv_results$obs < .25, 1,  
-                                 ifelse(cv_results$obs >=.25 & cv_results$obs < .75, 2, 3))
+cv_results$pred_bin <- ifelse(cv_results$pred < 0.25, 1, 
+                              ifelse(cv_results$pred >= 0.25 & cv_results$pred < 0.75, 2, 3))
+
+# Could also rewrite the nested ifelse() using dplyr::case_when()
+# The assignments are made in order, so just using TRUE for the last case 
+# is just saying "everything else not covered by previous cases is a 3"
+# cv_results <- cv_results |> 
+#   dplyr::mutate(
+#     pred_bin = dplyr::case_when(
+#       pred < 0.25 ~ 1, 
+#       pred >= 0.25 & pred < 0.75 ~ 2, 
+#       TRUE ~ 3
+#     )
+#   )
+
+cv_results$obs_bin <- ifelse(cv_results$obs < 0.25, 1,  
+                             ifelse(cv_results$obs >= 0.25 & cv_results$obs < 0.75, 2, 3))
 
 ## five classes - overwrite above
-cv_results$pred_bin <- ifelse(cv_results$pred < .25, 1, 
-                                      ifelse(cv_results$pred >=.25 & cv_results$pred < .5, 2, 
-                                             ifelse(cv_results$pred >=.5 & cv_results$pred < .75, 3, 
-                                                    ifelse(cv_results$pred >=.75 & cv_results$pred < .9, 4, 5))))
-cv_results$obs_bin <- ifelse(cv_results$obs < .25, 1,  
-                                     ifelse(cv_results$obs >=.25 & cv_results$obs < .5, 2, 
-                                            ifelse(cv_results$obs >=.5 & cv_results$obs < .75, 3, 
-                                                   ifelse(cv_results$obs >=.75 & cv_results$obs < .9, 4, 5))))
+cv_results$pred_bin <- ifelse(cv_results$pred < 0.25, 1, 
+                              ifelse(cv_results$pred >= 0.25 & cv_results$pred < 0.5, 2, 
+                                     ifelse(cv_results$pred >= 0.5 & cv_results$pred < 0.75, 3, 
+                                            ifelse(cv_results$pred >= 0.75 & cv_results$pred < 0.9, 4, 5))))
+cv_results$obs_bin <- ifelse(cv_results$obs < 0.25, 1,  
+                             ifelse(cv_results$obs >= 0.25 & cv_results$obs < 0.5, 2, 
+                                    ifelse(cv_results$obs >= 0.5 & cv_results$obs < 0.75, 3, 
+                                           ifelse(cv_results$obs >= 0.75 & cv_results$obs < 0.9, 4, 5))))
 # Save results
 
 ## does this have ecoregion already? if so, delete vector write with coords?
@@ -93,13 +105,10 @@ write.csv(cv_results, paste0(data_dir, "saved/ranger_cv_results.csv"), row.names
 
 ##### 
 ##### SAVE THE MODEL #####
-ard_df = ard |> 
-  sf::st_drop_geometry()
-
 # Fit on all data
 final_mod <- ranger::ranger(
   formula = as.formula(best_fit$important_variable_rf_formula),
-  data = ard_df,
+  data = ard,
   num.trees = 1000,
   mtry = best_fit$mtry,
   min.node.size = best_fit$min.node.size,
@@ -108,6 +117,9 @@ final_mod <- ranger::ranger(
 )
 
 # 2) Save it once
-saveRDS(final_mod, file = file.path(data_dir, "rf_final_model.rds"))
+saveRDS(
+  object = final_mod, 
+  file = here::here("data/rf_final_model.rds")
+)
 
 
