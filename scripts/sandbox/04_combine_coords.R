@@ -96,6 +96,11 @@ allcoords[allcoords$Dataset=="Hood",]$UniqueID <-
 allcoords[allcoords$Dataset=="Davis",]$UniqueID <- 
   paste0(allcoords[allcoords$Dataset=="Davis",]$UniqueID, "_", substring(allcoords[allcoords$Dataset=="Davis",]$YrFireName, 8))
 
+## new for v8
+allcoords <- allcoords[, c("UniqueID", "YrFireName", "FireYear", "lat_wgs84", "lon_wgs84", "pcnt_ba_mort")]
+names(allcoords) <- c("UniqueID", "Fire", "FireYear", "lat_wgs84", "lon_wgs84", "pcnt_ba_mort")
+
+
 ### Spatial part
 # create shapefile
 vcoords <- vect(allcoords, geom=c("lon_wgs84", "lat_wgs84"), crs="epsg:4326")
@@ -104,20 +109,22 @@ sfcoords <- st_as_sf(x = allcoords,
                      crs = "epsg:4326")
 
 ## Add image season start and end days as attributes
+# 
+# img_season <- vect("VP/severity_tmp/data/saved/image-seasons-resolve-ecoregions.gpkg")
+# img_season <- terra::project(img_season, crs(vcoords))
+# names(img_season)
+# img_season_simple <- img_season[, c("img_season_start", "img_season_end")]
+# 
+# # intersect the plots with the image season polygons to get Start_Day and End_Day 
+# days <- terra::extract(img_season_simple, vcoords)
+# names(days)
+# vcoords$startDay <- days$img_season_start
+# vcoords$endDay <- days$img_season_end
 
-img_season <- vect("VP/severity_tmp/data/saved/image-seasons-resolve-ecoregions.gpkg")
-img_season <- terra::project(img_season, crs(vcoords))
-names(img_season)
-img_season_simple <- img_season[, c("img_season_start", "img_season_end")]
 
-# intersect the plots with the image season polygons to get Start_Day and End_Day 
-days <- terra::extract(img_season_simple, vcoords)
-names(days)
-vcoords$Start_Day <- days$img_season_start
-vcoords$End_Day <- days$img_season_end
 
-write.csv(allcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v7.csv", row.names = FALSE)
-writeVector(vcoords, "VP/severity_tmp/data/saved/allcoords_withbaloss_v7.shp", overwrite = TRUE)
+write.csv(allcoords, "research/severity/data/input/allcoords_withbaloss_v8.csv", row.names = FALSE)
+writeVector(vcoords, "research/severity/data/input/allcoords_withbaloss_v8.shp", overwrite = TRUE)
 
 
 ## for splitting the data into two parts
