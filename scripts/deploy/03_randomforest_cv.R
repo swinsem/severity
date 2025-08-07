@@ -83,7 +83,7 @@ cv_results$pred_bin <- ifelse(cv_results$pred < 0.25, 1,
 cv_results$obs_bin <- ifelse(cv_results$obs < 0.25, 1,  
                              ifelse(cv_results$obs >= 0.25 & cv_results$obs < 0.75, 2, 3))
 
-## five classes - overwrite above
+## five classes - overwrites above
 cv_results$pred_bin <- ifelse(cv_results$pred < 0.25, 1, 
                               ifelse(cv_results$pred >= 0.25 & cv_results$pred < 0.5, 2, 
                                      ifelse(cv_results$pred >= 0.5 & cv_results$pred < 0.75, 3, 
