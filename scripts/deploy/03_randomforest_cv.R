@@ -50,7 +50,6 @@ ard_west <- ard[ard$domain=="western-us",]
 cv_results <- cross_validate(data = ard_west, hyperparameters = best_fit) 
 
 
-# str(full_model_results)
 str(cv_results)
 names(cv_results) <- c("UniqueID", "obs", "pred", "fold")
 
