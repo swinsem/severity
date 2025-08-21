@@ -11,7 +11,8 @@ library(ggplot2)
 library(reshape2)
 library(caret)
 
-data_dir <- "research/severity/data/"
+data_dir <- "data/"
+fig_dir <- "figs/"
 
 # Read cross-validation results with locations
 cv_results <- read.csv(paste0(data_dir, "saved/ranger_cv_results.csv"))
@@ -33,11 +34,10 @@ r2_table
 
 cv_results$ecoregion <- ifelse(cv_results$ecoregion=="Colorado Plateau shrublands", "Wasatch and Uinta montane forests", cv_results$ecoregion)
 
-# already a df?
-rfeco <- as.data.frame(cv_results)
+
 
 #### Plot Figure 2 ####
-ggplot(rfeco) +
+ggplot(cv_results) +
   geom_point(aes(x=obs, y=pred), alpha=.6) +
   geom_abline() +
   geom_smooth(aes(x=obs, y=pred), method = "loess") +
@@ -47,7 +47,7 @@ ggplot(rfeco) +
   xlab("Observed BA loss") +
   facet_wrap(~ ecoregion, scales = "free", 
              labeller = label_wrap_gen(width = 20))
-ggsave("VP/severity_tmp/plots/rf_pred_by_ecoregion3.png", width = 8, height = 9, units = "in")
+ggsave(paste0(fig_dir, "rf_pred_by_ecoregion.png"), width = 8, height = 9, units = "in")
 
 
 ## Correlation between R2 and number of plots
@@ -111,7 +111,7 @@ ggsave(paste0(fig_dir, "confusion_matrix.png"), width = 6, height = 6, units = "
 #### Class metrics ####
 class_metrics <- caret::confusionMatrix(as.factor(cv_results$pred_bin), as.factor(cv_results$obs_bin))$byClass
 class_metrics
-write.csv(class_metrics, paste0("saved/ranger_cv_confusionmatrix.csv"))
+write.csv(class_metrics, paste0(data_dir, "saved/ranger_cv_confusionmatrix.csv"))
 
 mean(cv_results[cv_results$pred_bin==5,]$pred)
 

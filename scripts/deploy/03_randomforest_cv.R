@@ -95,7 +95,7 @@ cv_results$obs_bin <- ifelse(cv_results$obs < 0.25, 1,
 ##### SAVE THE MODEL #####
 
 # Merge with ecoregion
-cv_results <- merge(cv_results, ard[, c("UniqueID", "ecoregion")], by = "UniqueID")
+cv_results <- merge(cv_results, ard_west[, c("UniqueID", "ecoregion")], by = "UniqueID")
 names(cv_results)
 
 write.csv(cv_results, paste0(data_dir, "saved/ranger_cv_results.csv"), row.names=FALSE)
@@ -104,7 +104,7 @@ write.csv(cv_results, paste0(data_dir, "saved/ranger_cv_results.csv"), row.names
 # Fit on all data
 final_mod <- ranger::ranger(
   formula = as.formula(best_fit$important_variable_rf_formula),
-  data = ard,
+  data = ard_west,
   num.trees = 1000,
   mtry = best_fit$mtry,
   min.node.size = best_fit$min.node.size,
