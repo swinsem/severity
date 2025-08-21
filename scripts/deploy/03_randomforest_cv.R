@@ -4,8 +4,8 @@ source("./R/utils.R")
 
 library(ranger)
 
-data_dir <- "research/severity/data/"
-fig_dir <- "research/severity/figs/"
+data_dir <- "data/"
+fig_dir <- "figs/"
 
 
 
@@ -90,19 +90,17 @@ cv_results$obs_bin <- ifelse(cv_results$obs < 0.25, 1,
                              ifelse(cv_results$obs >= 0.25 & cv_results$obs < 0.5, 2, 
                                     ifelse(cv_results$obs >= 0.5 & cv_results$obs < 0.75, 3, 
                                            ifelse(cv_results$obs >= 0.75 & cv_results$obs < 0.9, 4, 5))))
-# Save results
-
-## does this have ecoregion already? if so, delete vector write with coords?
-
-write.csv(cv_results, paste0(data_dir, "saved/ranger_cv_results.csv"), row.names=FALSE)
-
-# Merge with coords and write
-# rfcoords <- merge(ardcoords[, c("UniqueID", "ecoregion")], cv_results, by = "UniqueID")
-# names(rfcoords)
-# writeVector(rfcoords, paste0(data_dir, "saved/ranger_cv_results.gpkg"))
 
 ##### 
 ##### SAVE THE MODEL #####
+
+# Merge with ecoregion
+cv_results <- merge(cv_results, ard[, c("UniqueID", "ecoregion")], by = "UniqueID")
+names(cv_results)
+
+write.csv(cv_results, paste0(data_dir, "saved/ranger_cv_results.csv"), row.names=FALSE)
+
+
 # Fit on all data
 final_mod <- ranger::ranger(
   formula = as.formula(best_fit$important_variable_rf_formula),
