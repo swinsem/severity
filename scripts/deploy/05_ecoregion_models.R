@@ -61,6 +61,17 @@ ggsave(paste0(fig_dir, "pareto_frontier_ecoregional.png"), width = 6, height = 3
 # testing Arizona Mountains 
 best_fit_ar <- bestr2table[1, c(3:6)]
 
+filename <- "20250804"
+
+ard_with_spatial_folds_fname <- here::here(
+  glue::glue("data/ARD_{filename}_with-spatial-folds.csv")
+)
+
+ard <- readr::read_csv(
+  ard_with_spatial_folds_fname, 
+  col_types = list(spatial_fold = "factor")
+)
+
 cv_results_az <- cross_validate(data = ard[ard$domain=="Arizona Mountains forests",], hyperparameters = best_fit_ar) 
 
 coef_of_determin(obs=cv_results_az$obs, pred=cv_results_az$pred)
@@ -68,7 +79,7 @@ caret::R2(obs=cv_results_az$obs, pred=cv_results_az$pred)
 
 
 # examining by fold
-fold_summ <- cv_results_ar %>%
+fold_summ <- cv_results_az %>%
   dplyr::group_by(fold) %>%
   dplyr::summarize(
     n = dplyr::n(),
@@ -76,4 +87,6 @@ fold_summ <- cv_results_ar %>%
   )
 fold_summ
 
-
+ard %>%
+  filter(domain == "Arizona Mountains forests") %>%
+  distinct(Fire)
