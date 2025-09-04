@@ -137,8 +137,7 @@ ard_for_task_by_ecoregion_list <- tibble::tibble(
 ) |> 
   dplyr::left_join(ecoregions_with_plot_count)
 
-to_process <- ard_for_task_by_ecoregion_list |> 
-  dplyr::filter(v == 10)
+to_process <- ard_for_task_by_ecoregion_list
 
 ard_for_task_by_ecoregion <- purrr::map2(
     .x = to_process$ard_for_task_by_ecoregion,

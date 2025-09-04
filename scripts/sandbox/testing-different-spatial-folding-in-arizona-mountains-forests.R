@@ -8,7 +8,7 @@ source("R/utils.R")
 
 
 ### Get a set of hyperparameters and important variables to test
-cpi_results_full = data.table::fread(paste0(data_dir, "saved/conditional-predictive-impact-results_v7.0.csv"))
+cpi_results_full = data.table::fread(paste0(data_dir, "processed/conditional-predictive-impact-results_v7.1.csv"))
 
 ## filter to ecoregion models
 cpi_results_er = cpi_results_full[cpi_results_full$domain != "western-us", ]
@@ -32,6 +32,9 @@ bestr2table$r2_important_variables_overall <- signif(bestr2table$r2_important_va
 bestr2table$r2_mean_important_variables <- signif(bestr2table$r2_mean_important_variables, digits=3)
 head(bestr2table)
 
+bestr2table |> 
+  # dplyr::filter(domain == "Arizona Mountains forests") |> 
+  dplyr::select(domain, mtry, sample.fraction, min.node.size, important_variable_rf_formula, r2_important_variables_overall)
 #####
 # testing Arizona Mountains 
 best_fit_ar <- bestr2table[1, c(3:6)]
