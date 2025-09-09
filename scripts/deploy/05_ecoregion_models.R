@@ -46,10 +46,10 @@ write.csv(bestr2table, paste0(data_dir, "saved/ecoregion_models_bestr2.csv"))
 
 r2_pareto_front = rPref::psel(
   df = cpi_results,
-  pref = rPref::high(r2_important_variables_overall) * rPref::high(r2_important_variables)
+  pref = rPref::high(r2_mean_important_variables_overall) * rPref::high(r2_mean_important_variables)
 )
 
-ggplot2::ggplot(cpi_results, ggplot2::aes(x = r2_important_variables_overall, y = r2_important_variables, color=ecoregion)) +
+ggplot2::ggplot(cpi_results, ggplot2::aes(x = r2_mean_important_variables_overall, y = r2_mean_important_variables, color=ecoregion)) +
   ggplot2::geom_point() +
   ggplot2::geom_point(data = r2_pareto_front, shape=2, size = 3) +
   ggplot2::theme_bw() +
@@ -72,6 +72,8 @@ ard <- readr::read_csv(
   col_types = list(spatial_fold = "factor")
 )
 
+ardaz <- ard[ard$domain=="Arizona Mountains forests",]
+
 cv_results_az <- cross_validate(data = ard[ard$domain=="Arizona Mountains forests",], hyperparameters = best_fit_ar) 
 
 coef_of_determin(obs=cv_results_az$obs, pred=cv_results_az$pred)
@@ -90,3 +92,4 @@ fold_summ
 ard %>%
   filter(domain == "Arizona Mountains forests") %>%
   distinct(Fire)
+table(ard[ard$domain == "Sierra Nevada forests",]$Fire)
