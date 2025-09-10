@@ -108,11 +108,14 @@ ard_with_spatial_folds_global <- list(ard_with_spatial_folds_global) |>
   setNames("western-us")
 
 # Next set up ecoregion specific models
-ecoregions_to_model <- ard |> 
+ecoregions_with_plot_count <- ard |> 
   sf::st_drop_geometry() |> 
   dplyr::group_by(ecoregion) |> 
   dplyr::summarize(n = dplyr::n()) |> 
   dplyr::filter(n >= 10) |> 
+  dplyr::mutate(v = ifelse(n > 300, yes = 10, no = 5))
+
+ecoregions_to_model <- ecoregions_with_plot_count |> 
   dplyr::pull(ecoregion)
 
 # Doing the grouping in a separate step lets us preserve the group names
@@ -125,17 +128,23 @@ ard_for_task_by_ecoregion_grouped <- ard |>
 # ecoregions otherwise the folds will be too sparse. They are arguably too
 # sparse even at 5 folds given that some of those folds within ecoregions
 # have no variation in observed basal area loss
-
-
-ard_for_task_by_ecoregion <- ard_for_task_by_ecoregion_grouped |> 
+ard_for_task_by_ecoregion_list <- ard_for_task_by_ecoregion_grouped |> 
   dplyr::group_split() |> 
-  purrr::map(
-    .f = spatialsample::spatial_clustering_cv, 
-    v = 10, 
-    cluster_function = "kmeans",
-    .progress = TRUE
-  ) |> 
   setNames(dplyr::group_keys(ard_for_task_by_ecoregion_grouped)$ecoregion)
+
+ard_for_task_by_ecoregion_list <- tibble::tibble(
+  ecoregion = dplyr::group_keys(ard_for_task_by_ecoregion_grouped)$ecoregion,
+  ard_for_task_by_ecoregion = ard_for_task_by_ecoregion_list
+) |> 
+  dplyr::left_join(ecoregions_with_plot_count)
+
+ard_for_task_by_ecoregion <- purrr::map2(
+  .x = ard_for_task_by_ecoregion_list$ard_for_task_by_ecoregion,
+  .y = ard_for_task_by_ecoregion_list$v,
+  .f = spatialsample::spatial_clustering_cv, 
+  .progress = TRUE
+) |> 
+  setNames(ard_for_task_by_ecoregion_list$ecoregion)
 
 ard_with_spatial_folds_by_ecoregion <- ard_for_task_by_ecoregion |>
   purrr::map(
@@ -148,10 +157,6 @@ ard_with_spatial_folds_by_ecoregion <- ard_for_task_by_ecoregion |>
       out
     }
   )
-
-table(ard_with_spatial_folds_by_ecoregion$`Arizona Mountains forests`$spatial_fold)
-
-
 
 # Combine the global analysis-ready data with the ecoregion-specific (both
 # of which already have their spatial folds set up)
