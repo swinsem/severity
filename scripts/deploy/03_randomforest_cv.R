@@ -3,32 +3,10 @@ source("./R/utils.R")
 # Random forest cross validation
 
 library(ranger)
+library(dplyr)
 
 data_dir <- "data/"
 fig_dir <- "figs/"
-
-
-
-# Read data
-cpi_results_full = data.table::fread(paste0(data_dir, "saved/conditional-predictive-impact-results_v7.0.csv"))
-
-## filter for western-us domain results
-cpi_results_full <- cpi_results_full[cpi_results_full$domain == "western-us", ]
-
-cpi_results = cpi_results_full |>
-  dplyr::select(-Variable, -CPI, -SE, -test, -statistic, -estimate, -p.value, -ci.lo) |>
-  unique()
-
-# Plot Pareto frontier of cross-fold mean R2 and overall R2 of important variable reduced model
-r2_pareto_front = rPref::psel(
-  df = cpi_results,
-  pref = rPref::high(r2_important_variables_overall) * rPref::high(r2_mean_important_variables)
-)
-
-top_results = r2_pareto_front |> na.omit()
-
-best_fit = top_results[2,]
-
 
 #### read ard with spatial folds from github severity/data folder
 filename <- "20250804"
@@ -42,9 +20,32 @@ ard <- readr::read_csv(
   col_types = list(spatial_fold = "factor")
 )
 
-ard_west <- ard[ard$domain=="western-us",]
+# Read data
+cpi_results_full = data.table::fread(paste0(data_dir, "saved/conditional-predictive-impact-results_v7.0.csv"))
+
+
+## filter for western-us domain results
+cpi_results_west <- cpi_results_full[cpi_results_full$domain == "western-us", ]
+
+cpi_results_west = cpi_results_west |>
+  dplyr::select(-Variable, -CPI, -SE, -test, -statistic, -estimate, -p.value, -ci.lo) |>
+  unique()
+
+# Plot Pareto frontier of cross-fold mean R2 and overall R2 of important variable reduced model
+r2_pareto_front = rPref::psel(
+  df = cpi_results_west,
+  pref = rPref::high(r2_important_variables_overall) * rPref::high(r2_mean_important_variables)
+)
+
+top_results = r2_pareto_front |> na.omit()
+
+best_fit = top_results[2,]
+
 
 ##### cross-validation #####
+
+# filter to full western-us model only
+ard_west <- ard[ard$domain=="western-us",]
 
 # Run CV function
 cv_results <- cross_validate(data = ard_west, hyperparameters = best_fit) 
