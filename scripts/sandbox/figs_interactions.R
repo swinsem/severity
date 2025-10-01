@@ -129,6 +129,7 @@ plot_conditional(post_swir2swir1, precip_cat, data = ard_west2, palette = pal_pr
 # ------------------------------------------------
 # surface_gam(): 2D GAM surface for var1 × var2, holding others at medians
 # ------------------------------------------------
+### I don't really understand these yet!
 
 library(mgcv)
 
@@ -173,8 +174,8 @@ surface_gam("post_swir2swir1", "zScorePrecip1")
 surface_gam("dndvi",           "zScorePrecip1")
 surface_gam("post_swir2swir1", "meanTPI")
 surface_gam("dndvi",           "meanTPI")
-surface_gam("dred",            "zScorePrecip1")
-surface_gam("northness",       "zScorePrecip1")
+surface_gam("post_swir2swir1", "northness")
+surface_gam("dndvi",           "northness") # ?? this is the one marked "use" for 2nd order ALE
 
 
 ard_west3 <- ard_west %>%
