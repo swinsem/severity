@@ -146,7 +146,7 @@ library(fields)
 # Prediction function
 yhat <- function(X.model, newdata) as.numeric(predict(X.model, newdata)$predictions)
 
-# dSWIR2SWIR1 to precip
+# postSWIR2SWIR1 to precip
 
 # Save the plot as a PNG file
 png("figs/two_way_ale_precip_pswir.png", width = 6, height = 5, units="in", res=300)
@@ -229,16 +229,18 @@ pswir_dndvi_two_way_ale = ALEPlot::ALEPlot(
   pred.fun = yhat
 )
 
-image(
+image.plot(
   pswir_dndvi_two_way_ale$x.values[[1]], 
   pswir_dndvi_two_way_ale$x.values[[2]], 
   pswir_dndvi_two_way_ale$f.values, 
   xlab = "dNDVI", 
   ylab = "post swir2/swir1", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5  # Adjusts the margin for the legend, change if needed
 ) 
 
 dev.off()
+
 
 ## same as above but for the combination of post_swir2swir1 and meanTPI
 png("figs/two_way_ale_pswir_tpi.png", width = 6, height = 5, units="in", res=300)
@@ -250,13 +252,14 @@ pswir_tpi_two_way_ale = ALEPlot::ALEPlot(
   pred.fun = yhat
 )
 
-image(
+image.plot(
   pswir_tpi_two_way_ale$x.values[[1]], 
   pswir_tpi_two_way_ale$x.values[[2]], 
   pswir_tpi_two_way_ale$f.values, 
   xlab = "TPI", 
   ylab = "post swir2/swir1", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 
 dev.off()
@@ -270,13 +273,14 @@ dndvi_tpi_two_way_ale = ALEPlot::ALEPlot(
   J = c("meanTPI", "dndvi"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   dndvi_tpi_two_way_ale$x.values[[1]], 
   dndvi_tpi_two_way_ale$x.values[[2]], 
   dndvi_tpi_two_way_ale$f.values, 
   xlab = "TPI", 
   ylab = "dNDVI", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 
@@ -288,13 +292,14 @@ pswir_dred_two_way_ale = ALEPlot::ALEPlot(
   J = c("dred", "post_swir2swir1"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   pswir_dred_two_way_ale$x.values[[1]], 
   pswir_dred_two_way_ale$x.values[[2]], 
   pswir_dred_two_way_ale$f.values, 
   xlab = "dRed", 
   ylab = "post swir2/swir1", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 
@@ -306,13 +311,14 @@ dndvi_dred_two_way_ale = ALEPlot::ALEPlot(
   J = c("dndvi", "dred"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   dndvi_dred_two_way_ale$x.values[[1]], 
   dndvi_dred_two_way_ale$x.values[[2]], 
   dndvi_dred_two_way_ale$f.values, 
   xlab = "dNDVI",
   ylab = "dRed",
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 
@@ -324,13 +330,14 @@ dndvi_north_two_way_ale = ALEPlot::ALEPlot(
   J = c("dndvi", "northness"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   dndvi_north_two_way_ale$x.values[[1]], 
   dndvi_north_two_way_ale$x.values[[2]], 
   dndvi_north_two_way_ale$f.values, 
   ylab = "Northness", 
   xlab = "dNDVI", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 
@@ -342,13 +349,14 @@ precip_tpi_two_way_ale = ALEPlot::ALEPlot(
   J = c("zScorePrecip1", "meanTPI"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   precip_tpi_two_way_ale$x.values[[1]], 
   precip_tpi_two_way_ale$x.values[[2]], 
   precip_tpi_two_way_ale$f.values, 
   ylab = "TPI", 
   xlab = "Z-score Precipitation", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 
@@ -360,13 +368,14 @@ precip_dred_two_way_ale = ALEPlot::ALEPlot(
   J = c("zScorePrecip1", "dred"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   precip_dred_two_way_ale$x.values[[1]], 
   precip_dred_two_way_ale$x.values[[2]], 
   precip_dred_two_way_ale$f.values, 
   ylab = "dRed", 
   xlab = "Z-score Precipitation", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 
@@ -378,7 +387,7 @@ precip_north_two_way_ale = ALEPlot::ALEPlot(
   J = c("zScorePrecip1", "northness"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   precip_north_two_way_ale$x.values[[1]], 
   precip_north_two_way_ale$x.values[[2]], 
   precip_north_two_way_ale$f.values, 
@@ -396,13 +405,14 @@ tpi_north_two_way_ale = ALEPlot::ALEPlot(
   J = c("meanTPI", "northness"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   tpi_north_two_way_ale$x.values[[1]], 
   tpi_north_two_way_ale$x.values[[2]], 
   tpi_north_two_way_ale$f.values, 
   ylab = "Northness", 
   xlab = "TPI", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 
@@ -414,13 +424,14 @@ dred_north_two_way_ale = ALEPlot::ALEPlot(
   J = c("dred", "northness"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   dred_north_two_way_ale$x.values[[1]], 
   dred_north_two_way_ale$x.values[[2]], 
   dred_north_two_way_ale$f.values, 
   ylab = "Northness", 
   xlab = "dRed", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 
@@ -432,13 +443,14 @@ tpi_dred_two_way_ale = ALEPlot::ALEPlot(
   J = c("meanTPI", "dred"), 
   pred.fun = yhat
 )
-image(
+image.plot(
   tpi_dred_two_way_ale$x.values[[1]], 
   tpi_dred_two_way_ale$x.values[[2]], 
   tpi_dred_two_way_ale$f.values, 
   ylab = "dRed", 
   xlab = "TPI", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
+  col = hcl.colors(n = 100, palette = "Blue-Red"),
+  legend.mar = 5 
 )
 dev.off()
 

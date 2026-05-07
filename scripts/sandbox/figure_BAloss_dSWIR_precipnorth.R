@@ -45,7 +45,7 @@ ggplot(ard_west, aes(x = post_swir2swir1, y = pcnt_ba_mo)) +
 
 # version with overall line
 ggplot(ard, aes(x = post_swir2swir1, y = pcnt_ba_mo, col = zScorePrecip1 > 0)) +
-  geom_point(aes(alpha=0.25), show_guide = FALSE) +
+  geom_point(aes(alpha=0.25), show.legend = FALSE) +
   # Smoothing split by zScorePrecip1 > 0
   geom_smooth() +
   # Smoothing over the entire dataset (ignores color grouping)
@@ -66,7 +66,7 @@ ggplot(ard, aes(x = post_swir2swir1, y = pcnt_ba_mo, col = zScorePrecip1 > 0)) +
   theme(legend.position="bottom", legend.direction="vertical")
 
 ggplot(ard, aes(x = post_swir2swir1, y = pcnt_ba_mo, col = zScorePrecip1 > 0)) +
-  geom_point(aes(alpha=0.25), show_guide = FALSE) +
+  geom_point(aes(alpha=0.25), show.legend = FALSE) +
   geom_smooth() +
   scale_color_manual(
     name = "Z-score precipitation",          # Legend title
@@ -80,7 +80,7 @@ ggsave("VP/severity_tmp/plots/BA_pSWIR_precip2.png", width = 3, height = 4, unit
 
 
 ggplot(ard_west, aes(x = post_swir2swir1, y = pcnt_ba_mo, col = northness > 0)) +
-  geom_point(aes(alpha=0.25), show_guide = FALSE) +
+  geom_point(aes(alpha=0.25), show.legend = FALSE) +
   geom_smooth() +
   scale_color_manual(
     name = "Northness",          # Legend title

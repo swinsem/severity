@@ -32,7 +32,7 @@ coords <- terra::vect(ravg,
 
 # use names consistent with the rest of the code
 names(coords) <- c("UniqueID", "pcnt_ba_mort", "Fire", "FireYear")
-terra::writeVector(coords, "research/severity/data/RAVG_test.shp", overwrite=TRUE)
+terra::writeVector(coords, "data/RAVG_test.shp", overwrite=TRUE)
 
 
 ###################################################################################
@@ -102,7 +102,7 @@ writeVector(ardcoords, paste0(data_dir, "saved/ARD_", filename, ".gpkg"), overwr
 ard <- read.csv(paste0(data_dir, "saved/ARD_", filename, ".csv"))
 
 # load model as rds
-final_mod <- readRDS(paste0(data_dir, "rf_final_model.rds"))
+final_mod <- readRDS(paste0(data_dir, "rf_final_model_112925.rds"))
 
 # run RF model on new data
 set.seed(20250711)
