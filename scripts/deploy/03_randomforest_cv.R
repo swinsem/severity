@@ -86,7 +86,12 @@ top_results_corr_v1
 write.csv(top_results_corr_v1, paste0(data_dir, "saved/pareto_frontier_v1.csv"))
 
 ## Chosen model: the 4-variable formula with mtry 3, min.node.size 50, and sample.fraction 0.632
-best_fit = top_results_corr_v1[2,]
+best_fit <- top_results_corr_v1 |>
+  filter(
+    important_variable_rf_formula == "pcnt_ba_mo ~ dnir + northness + rdnbr + zScorePrecip1",
+    mtry          == 3,
+    min.node.size == 50
+  )
 
 # Version 2: parsimony + overall R2 + mean fold R2
 top_results_corr_v2 <- rPref::psel(
@@ -105,22 +110,6 @@ top_results_corr_v2 <- rPref::psel(
 top_results_corr_v2
 write.csv(top_results_corr_v2, paste0(data_dir, "saved/pareto_frontier_v2.csv"))
 
-# Version 3: parsimony + overall R2 + mean fold R2 + max corr
-top_results_corr_v3 <- rPref::psel(
-  df   = cpi_low_corr |> filter(!is.na(r2_mean_important_variables)),
-  pref = rPref::low(n_important_variables) * rPref::high(r2_important_variables_overall) *
-    rPref::high(r2_mean_important_variables) *
-    rPref::low(max_corr)
-) |>
-  select(n_important_variables, important_variable_rf_formula,
-         mtry, min.node.size, sample.fraction,
-         r2_mean_important_variables, r2_important_variables_overall, max_corr) |>
-  mutate(across(starts_with("r2_"), \(x) signif(x, 3)),
-         max_corr = round(max_corr, 3)) |>
-  arrange(n_important_variables, desc(r2_important_variables_overall)) |>
-  as_tibble()
-
-top_results_corr_v2
 
 ##### cross-validation #####
 

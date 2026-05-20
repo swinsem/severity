@@ -102,7 +102,7 @@ writeVector(ardcoords, paste0(data_dir, "saved/ARD_", filename, ".gpkg"), overwr
 ard <- read.csv(paste0(data_dir, "saved/ARD_", filename, ".csv"))
 
 # load model as rds
-final_mod <- readRDS(paste0(data_dir, "rf_final_model_112925.rds"))
+final_mod <- readRDS(here::here("data/rf_final_model_050626.rds"))
 
 # run RF model on new data
 set.seed(20250711)
@@ -111,7 +111,7 @@ results <- cbind(ard, pred = preds)
 
 
 ### assess outputs with R2
-coef_of_determin(obs=results$pcnt_ba_mo, pred=results$pred) # 0.514
+coef_of_determin(obs=results$pcnt_ba_mo, pred=results$pred) # 0.477
 
 
 # calculate R2 for each ecoregion if there are multiple in the dataset, using ardcoords from above

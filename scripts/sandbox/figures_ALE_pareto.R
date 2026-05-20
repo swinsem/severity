@@ -16,32 +16,39 @@ cpi_results_west = cpi_results_west |>
   unique()
 
 # Plot Pareto frontier of cross-fold mean R2 and overall R2 of important variable reduced model
-r2_pareto_front = rPref::psel(
-  df = cpi_results_west,
-  pref = rPref::high(r2_important_variables_overall) * rPref::high(r2_mean_important_variables)
-)
+top_results_corr_v1 <- rPref::psel(
+  df   = cpi_low_corr,
+  pref = rPref::low(n_important_variables) * rPref::high(r2_important_variables_overall)
+) |>
+  select(n_important_variables, important_variable_rf_formula,
+         mtry, min.node.size, sample.fraction,
+         r2_mean_important_variables, r2_important_variables_overall, max_corr) |>
+  mutate(across(starts_with("r2_"), \(x) signif(x, 3)),
+         max_corr = round(max_corr, 3)) |>
+  arrange(n_important_variables, desc(r2_important_variables_overall)) |>
+  as_tibble()
+
+best_fit = top_results_corr_v1[2,]
+# top_results_corr_v1 <- read.csv(paste0(data_dir, "saved/pareto_frontier_v1.csv"))
 
 ##########################################
 ##### Pareto frontier plot #####
 ##########################################
 
-ggplot2::ggplot(cpi_results_west, ggplot2::aes(x = r2_important_variables_overall, y = r2_mean_important_variables)) +
+ggplot2::ggplot(cpi_results_west, ggplot2::aes(x = r2_important_variables_overall, y = n_important_variables)) +
   ggplot2::geom_point() +
-  ggplot2::geom_point(data = r2_pareto_front, color = "red", size = 3) +
+  ggplot2::geom_point(data = top_results_corr_v1, color = "red", size = 3) +
   ggplot2::theme_bw() +
-  labs(y="R2 - mean of spatial folds", x="R2 - overall mean across plots")
-ggsave("figs/pareto_frontier.png", width = 6, height = 4, units = "in")
+  labs(y="Number of important variables", x="R2 - overall mean across plots")
+ggsave("figs/pareto_frontier_260514.png", width = 6, height = 4, units = "in")
 
 ##########################################
 ##### First-order ALE plots #####
 ##########################################
 
-top_results = r2_pareto_front |> na.omit()
-
-best_fit = top_results[2,]
 
 # load model
-final_mod <- readRDS("data/rf_final_model.rds")
+final_mod <- readRDS("data/rf_final_model_050626.rds")
 
 # load ARD
 filename <- "20250804"
@@ -107,11 +114,9 @@ plot_df <- plot_data_important_vars %>%
 
 
 facet_labels <- c(
-  "post_swir2swir1" = "post SWIR2/SWIR1",
-  "dndvi" = "dNDVI",
+  "rdnbr" = "RdNBR",
   "zScorePrecip1" = "Z-Score Precipitation",
-  "meanTPI" = "TPI",
-  "dred" = "dRed",
+  "dnir" = "dNIR",
   "northness" = "Northness"
 )
 
@@ -133,7 +138,7 @@ ggplot(plot_df, aes(x = x, y = y)) +
   ) +
   xlab("x") +
   ylab("y")
-ggsave("figs/ALE_first_order.png", width = 6, height = 4, units = "in")
+ggsave("figs/ALE_first_order_260514.png", width = 6, height = 4, units = "in")
 
 ##########################################
 ##### Two-way ALE plots #####
@@ -146,16 +151,16 @@ library(fields)
 # Prediction function
 yhat <- function(X.model, newdata) as.numeric(predict(X.model, newdata)$predictions)
 
-# postSWIR2SWIR1 to precip
+# RdNBR:precip
 
 # Save the plot as a PNG file
-png("figs/two_way_ale_precip_pswir.png", width = 6, height = 5, units="in", res=300)
+png("figs/two_way_ale_precip_rdnbr.png", width = 6, height = 5, units="in", res=300)
 
 # Run ALEPlot to get the ALE values
 zscoreprecip1_postswir_two_way_ale = ALEPlot::ALEPlot(
   X = ard_df[, final_mod$forest$independent.variable.names], 
   X.model = final_mod, 
-  J = c("post_swir2swir1", "zScorePrecip1"), 
+  J = c("rdnbr", "zScorePrecip1"), 
   pred.fun = yhat
 )
 
@@ -165,7 +170,7 @@ image.plot(
   zscoreprecip1_postswir_two_way_ale$x.values[[2]], 
   zscoreprecip1_postswir_two_way_ale$f.values, 
   ylab = "Z-score Precipitation", 
-  xlab = "post SWIR2/SWIR1", 
+  xlab = "RdNBR", 
   col = hcl.colors(n = 100, palette = "Blue-Red"),
   legend.mar = 5  # Adjusts the margin for the legend, change if needed
 )
@@ -173,13 +178,13 @@ image.plot(
 dev.off()
 
 
-# postSWIR2SWIR1 to northness
-png("figs/two_way_ale_north_pswir.png", width = 6, height = 5, units="in", res=300)
+# RdNBR:northness
+png("figs/two_way_ale_north_rdnbr.png", width = 6, height = 5, units="in", res=300)
 
 northness_dswir_two_way_ale = ALEPlot::ALEPlot(
   X = ard_df[, final_mod$forest$independent.variable.names], 
   X.model = final_mod, 
-  J = c("northness", "post_swir2swir1"), 
+  J = c("rdnbr", "northness"), 
   pred.fun = yhat
 )
 
@@ -187,21 +192,21 @@ image.plot(
   northness_dswir_two_way_ale$x.values[[1]], 
   northness_dswir_two_way_ale$x.values[[2]], 
   northness_dswir_two_way_ale$f.values, 
-  xlab = "Northness", 
-  ylab = "post SWIR2/SWIR1", 
+  ylab = "Northness", 
+  xlab = "RdNBR", 
   col = hcl.colors(n = 100, palette = "Blue-Red"),
   legend.mar = 5
 )
 
 dev.off()
 
-## dNDVI:Precip
-png("figs/two_way_ale_dndvi_precip.png", width = 6, height = 5, units="in", res=300)
+## dNIR:Precip
+png("figs/two_way_ale_dnir_precip.png", width = 6, height = 5, units="in", res=300)
 
 dndvi_precip_two_way_ale = ALEPlot::ALEPlot(
   X = ard_df[, final_mod$forest$independent.variable.names], 
   X.model = final_mod, 
-  J = c("dndvi", "zScorePrecip1"), 
+  J = c("dnir", "zScorePrecip1"), 
   pred.fun = yhat
 )
 
@@ -209,7 +214,7 @@ image.plot(
   dndvi_precip_two_way_ale$x.values[[1]], 
   dndvi_precip_two_way_ale$x.values[[2]], 
   dndvi_precip_two_way_ale$f.values, 
-  xlab = "dNDVI", 
+  xlab = "dNIR", 
   ylab = "Z-score Precipitation", 
   col = hcl.colors(n = 100, palette = "Blue-Red"),
   legend.mar = 5 
@@ -219,13 +224,13 @@ image.plot(
 dev.off()
 
 
-## postSWIR2/SWIR1:dNDVI
-png("figs/two_way_ale_pswir_dndvi.png", width = 6, height = 5, units="in", res=300)
+## RdNBR:dNIR
+png("figs/two_way_ale_rdnbr_dnir.png", width = 6, height = 5, units="in", res=300)
 
 pswir_dndvi_two_way_ale = ALEPlot::ALEPlot(
   X = ard_df[, final_mod$forest$independent.variable.names], 
   X.model = final_mod, 
-  J = c("dndvi", "post_swir2swir1"), 
+  J = c("rdnbr", "dnir"), 
   pred.fun = yhat
 )
 
@@ -233,8 +238,8 @@ image.plot(
   pswir_dndvi_two_way_ale$x.values[[1]], 
   pswir_dndvi_two_way_ale$x.values[[2]], 
   pswir_dndvi_two_way_ale$f.values, 
-  xlab = "dNDVI", 
-  ylab = "post swir2/swir1", 
+  xlab = "RdNBR", 
+  ylab = "dNIR", 
   col = hcl.colors(n = 100, palette = "Blue-Red"),
   legend.mar = 5  # Adjusts the margin for the legend, change if needed
 ) 
@@ -242,13 +247,13 @@ image.plot(
 dev.off()
 
 
-## same as above but for the combination of post_swir2swir1 and meanTPI
-png("figs/two_way_ale_pswir_tpi.png", width = 6, height = 5, units="in", res=300)
+## dNIR:northness
+png("figs/two_way_ale_dnir_north.png", width = 6, height = 5, units="in", res=300)
 
 pswir_tpi_two_way_ale = ALEPlot::ALEPlot(
   X = ard_df[, final_mod$forest$independent.variable.names], 
   X.model = final_mod, 
-  J = c("meanTPI", "post_swir2swir1"), 
+  J = c("dnir", "northness"), 
   pred.fun = yhat
 )
 
@@ -256,205 +261,111 @@ image.plot(
   pswir_tpi_two_way_ale$x.values[[1]], 
   pswir_tpi_two_way_ale$x.values[[2]], 
   pswir_tpi_two_way_ale$f.values, 
-  xlab = "TPI", 
-  ylab = "post swir2/swir1", 
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-
-dev.off()
-
-## same as above but for dNDVI and meanTPI
-png("figs/two_way_ale_dndvi_tpi.png", width = 6, height = 5, units="in", res=300)
-
-dndvi_tpi_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("meanTPI", "dndvi"), 
-  pred.fun = yhat
-)
-image.plot(
-  dndvi_tpi_two_way_ale$x.values[[1]], 
-  dndvi_tpi_two_way_ale$x.values[[2]], 
-  dndvi_tpi_two_way_ale$f.values, 
-  xlab = "TPI", 
-  ylab = "dNDVI", 
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-dev.off()
-
-## same as above but for post SWIR2/SWIR1 and dRed
-png("figs/two_way_ale_pswir_dred.png", width = 6, height = 5, units="in", res=300)
-pswir_dred_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("dred", "post_swir2swir1"), 
-  pred.fun = yhat
-)
-image.plot(
-  pswir_dred_two_way_ale$x.values[[1]], 
-  pswir_dred_two_way_ale$x.values[[2]], 
-  pswir_dred_two_way_ale$f.values, 
-  xlab = "dRed", 
-  ylab = "post swir2/swir1", 
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-dev.off()
-
-## same as above but dndvi and dred
-png("figs/two_way_ale_dndvi_dred.png", width = 6, height = 5, units="in", res=300)
-dndvi_dred_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("dndvi", "dred"), 
-  pred.fun = yhat
-)
-image.plot(
-  dndvi_dred_two_way_ale$x.values[[1]], 
-  dndvi_dred_two_way_ale$x.values[[2]], 
-  dndvi_dred_two_way_ale$f.values, 
-  xlab = "dNDVI",
-  ylab = "dRed",
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-dev.off()
-
-## same as above but dndvi and northness
-png("figs/two_way_ale_dndvi_north.png", width = 6, height = 5, units="in", res=300)
-dndvi_north_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("dndvi", "northness"), 
-  pred.fun = yhat
-)
-image.plot(
-  dndvi_north_two_way_ale$x.values[[1]], 
-  dndvi_north_two_way_ale$x.values[[2]], 
-  dndvi_north_two_way_ale$f.values, 
+  xlab = "dNIR", 
   ylab = "Northness", 
-  xlab = "dNDVI", 
   col = hcl.colors(n = 100, palette = "Blue-Red"),
   legend.mar = 5 
 )
+
 dev.off()
 
-## same as above but zscore precip to tpi
-png("figs/two_way_ale_precip_tpi.png", width = 6, height = 5, units="in", res=300)
-precip_tpi_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("zScorePrecip1", "meanTPI"), 
-  pred.fun = yhat
-)
-image.plot(
-  precip_tpi_two_way_ale$x.values[[1]], 
-  precip_tpi_two_way_ale$x.values[[2]], 
-  precip_tpi_two_way_ale$f.values, 
-  ylab = "TPI", 
-  xlab = "Z-score Precipitation", 
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-dev.off()
 
-## above but precip to dred
-png("figs/two_way_ale_precip_dred.png", width = 6, height = 5, units="in", res=300)
-precip_dred_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("zScorePrecip1", "dred"), 
-  pred.fun = yhat
-)
-image.plot(
-  precip_dred_two_way_ale$x.values[[1]], 
-  precip_dred_two_way_ale$x.values[[2]], 
-  precip_dred_two_way_ale$f.values, 
-  ylab = "dRed", 
-  xlab = "Z-score Precipitation", 
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-dev.off()
 
-## above but precip to northness
-png("figs/two_way_ale_precip_north.png", width = 6, height = 5, units="in", res=300)
-precip_north_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("zScorePrecip1", "northness"), 
-  pred.fun = yhat
-)
-image.plot(
-  precip_north_two_way_ale$x.values[[1]], 
-  precip_north_two_way_ale$x.values[[2]], 
-  precip_north_two_way_ale$f.values, 
-  ylab = "Northness", 
-  xlab = "Z-score Precipitation", 
-  col = hcl.colors(n = 100, palette = "Blue-Red")
-)
-dev.off()
 
-# above but tpi to northness
-png("figs/two_way_ale_tpi_north.png", width = 6, height = 5, units="in", res=300)
-tpi_north_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("meanTPI", "northness"), 
-  pred.fun = yhat
-)
-image.plot(
-  tpi_north_two_way_ale$x.values[[1]], 
-  tpi_north_two_way_ale$x.values[[2]], 
-  tpi_north_two_way_ale$f.values, 
-  ylab = "Northness", 
-  xlab = "TPI", 
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-dev.off()
+##########################################
+##### Two-way ALE — ggplot with data density ######
+##########################################
+# Two-way ALE isolates the INTERACTION effect: how much the combination of two
+# variables shifts predictions beyond what each contributes independently.
+# Values near zero mean the variables act additively; red = that combination
+# predicts higher BA loss than marginal effects alone would suggest.
+# White contours show observed data density so readers can distinguish
+# model behaviour supported by data from extrapolation into sparse regions.
 
-# above but dred to northness
-png("figs/two_way_ale_dred_north.png", width = 6, height = 5, units="in", res=300)
-dred_north_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("dred", "northness"), 
-  pred.fun = yhat
-)
-image.plot(
-  dred_north_two_way_ale$x.values[[1]], 
-  dred_north_two_way_ale$x.values[[2]], 
-  dred_north_two_way_ale$f.values, 
-  ylab = "Northness", 
-  xlab = "dRed", 
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-dev.off()
+ale2d_gg <- function(ale, xlab, ylab,
+                     raw_x, raw_y,
+                     xlim = NULL, ylim = NULL,
+                     n_contour = 5) {
+  x_vals <- ale$x.values[[1]]
+  y_vals <- ale$x.values[[2]]
 
-# above but tpi to dred
-png("figs/two_way_ale_tpi_dred.png", width = 6, height = 5, units="in", res=300)
-tpi_dred_two_way_ale = ALEPlot::ALEPlot(
-  X = ard_df[, final_mod$forest$independent.variable.names], 
-  X.model = final_mod, 
-  J = c("meanTPI", "dred"), 
-  pred.fun = yhat
-)
-image.plot(
-  tpi_dred_two_way_ale$x.values[[1]], 
-  tpi_dred_two_way_ale$x.values[[2]], 
-  tpi_dred_two_way_ale$f.values, 
-  ylab = "dRed", 
-  xlab = "TPI", 
-  col = hcl.colors(n = 100, palette = "Blue-Red"),
-  legend.mar = 5 
-)
-dev.off()
+  # compute tile width/height from spacing between grid points so tiles fill
+  # the space rather than rendering as pinpoints
+  bin_widths <- function(v) {
+    n <- length(v)
+    w <- numeric(n)
+    w[1]       <- v[2] - v[1]
+    w[n]       <- v[n] - v[n - 1]
+    if (n > 2) w[2:(n-1)] <- (v[3:n] - v[1:(n-2)]) / 2
+    w
+  }
 
-# question: have I done all of the combinations of the 6 variables?
+  grid        <- expand.grid(x = x_vals, y = y_vals)
+  grid$ale    <- as.vector(ale$f.values)
+  grid$width  <- bin_widths(x_vals)[match(grid$x, x_vals)]
+  grid$height <- bin_widths(y_vals)[match(grid$y, y_vals)]
+
+  # colour scale limits based on the visible range only
+  grid_vis <- grid
+  if (!is.null(xlim)) grid_vis <- grid_vis[grid_vis$x >= xlim[1] & grid_vis$x <= xlim[2], ]
+  if (!is.null(ylim)) grid_vis <- grid_vis[grid_vis$y >= ylim[1] & grid_vis$y <= ylim[2], ]
+  lim <- max(abs(grid_vis$ale), na.rm = TRUE)
+
+  raw_df <- data.frame(x = raw_x, y = raw_y)
+
+  ggplot(grid, aes(x, y, fill = ale, width = width, height = height)) +
+    geom_tile() +
+    geom_density_2d(data = raw_df, aes(x, y), inherit.aes = FALSE,
+                    colour = "grey15", alpha = 0.8, linewidth = 0.4, bins = n_contour) +
+    scale_fill_distiller(palette = "RdBu", direction = -1,
+                         limits = c(-lim, lim), name = "ALE\neffect") +
+    coord_cartesian(xlim = xlim, ylim = ylim) +
+    labs(x = xlab, y = ylab) +
+    theme_bw()
+}
+
+p_ale2d_rdnbr_precip <- ale2d_gg(
+  zscoreprecip1_postswir_two_way_ale,
+  xlab = "RdNBR", ylab = "Z-score precipitation",
+  raw_x = ard_df$rdnbr, raw_y = ard_df$zScorePrecip1,
+  xlim = c(-300, 1300)
+)
+ggsave(paste0(fig_dir, "ale2d_rdnbr_precip_gg.png"), p_ale2d_rdnbr_precip,
+       width = 6, height = 4.5, dpi = 300)
+
+p_ale2d_dnir_precip <- ale2d_gg(
+  dndvi_precip_two_way_ale,
+  xlab = "dNIR", ylab = "Z-score precipitation",
+  raw_x = ard_df$dnir, raw_y = ard_df$zScorePrecip1
+)
+ggsave(paste0(fig_dir, "ale2d_dnir_precip_gg.png"), p_ale2d_dnir_precip,
+       width = 6, height = 4.5, dpi = 300)
+
+p_ale2d_rdnbr_north <- ale2d_gg(
+  northness_dswir_two_way_ale,
+  xlab = "RdNBR", ylab = "Northness",
+  raw_x = ard_df$rdnbr, raw_y = ard_df$northness,
+  xlim = c(-300, 1300)
+)
+ggsave(paste0(fig_dir, "ale2d_rdnbr_northness_gg.png"), p_ale2d_rdnbr_north,
+       width = 6, height = 4.5, dpi = 300)
+
+p_ale2d_rdnbr_dnir <- ale2d_gg(
+  pswir_dndvi_two_way_ale,
+  xlab = "RdNBR", ylab = "dNIR",
+  raw_x = ard_df$rdnbr, raw_y = ard_df$dnir,
+  xlim = c(-300, 1300)
+)
+ggsave(paste0(fig_dir, "ale2d_rdnbr_dnir_gg.png"), p_ale2d_rdnbr_dnir,
+       width = 6, height = 4.5, dpi = 300)
+
+p_ale2d_dnir_north <- ale2d_gg(
+  pswir_tpi_two_way_ale,
+  xlab = "dNIR", ylab = "Northness",
+  raw_x = ard_df$dnir, raw_y = ard_df$northness
+)
+ggsave(paste0(fig_dir, "ale2d_dnir_northness_gg.png"), p_ale2d_dnir_north,
+       width = 6, height = 4.5, dpi = 300)
 
 
 ### code attempts that were abandoned:

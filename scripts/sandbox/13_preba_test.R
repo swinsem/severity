@@ -1,8 +1,8 @@
-vcoords <- vect("VP/severity_tmp/data/saved/allcoords_withbaloss_v6.shp")
+vcoords <- vect("../../VP/severity_tmp/data/saved/allcoords_withbaloss_v8.shp")
 
 names(vcoords)
 
-img_season <- vect("VP/severity_tmp/data/saved/image-seasons-resolve-ecoregions.gpkg")
+img_season <- vect("../../VP/severity_tmp/data/saved/image-seasons-resolve-ecoregions.gpkg")
 img_season <- terra::project(img_season, crs(vcoords))
 names(img_season)
 head(img_season)
@@ -14,7 +14,7 @@ names(ecor)
 vcoords$ecoregion <- ecor$eco_name
 
 ##
-plot_summary3 <- read.csv("VP/severity_tmp/data/saved/FTM/FTM_ba_v2.csv")
+plot_summary3 <- read.csv("../../VP/severity_tmp/data/saved/FTM/FTM_ba_v2.csv")
 names(plot_summary3)
 names(vcoords)
 names(plot_summary3)[1] <- "PlotID"

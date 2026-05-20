@@ -142,6 +142,59 @@ ard <- readr::read_csv(
 )
 ard_west <- ard[ard$domain == "western-us", ]
 
+# ── Ecoregion-level predictors of general model R2 ───────────────────────────
+# Addresses reviewer question: why does the model perform better in some
+# ecoregions than others? Three candidate explanations from existing data:
+#   1. Response heterogeneity: if BA loss is nearly uniform within an ecoregion,
+#      R2 is low by construction regardless of model accuracy.
+#   2. Predictor range: narrow RdNBR distributions give the model less signal.
+#   3. Background aridity (mean CWD): drier ecoregions mix surface and crown
+#      fire more; the same spectral index can represent different fire types,
+#      making spectral-to-mortality translation harder.
+
+eco_spread <- ard_west |>
+  group_by(ecoregion) |>
+  summarize(
+    sd_ba_loss  = sd(pcnt_ba_mo, na.rm = TRUE),
+    iqr_rdnbr   = IQR(rdnbr, na.rm = TRUE),
+    mean_cwd    = mean(meanCWD, na.rm = TRUE),
+    mean_precip = mean(meanPrecip, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+r2_eco <- r2_table |>
+  left_join(eco_spread, by = "ecoregion") |>
+  rename(n_plots = n_rows)
+
+# Correlation table
+cor(r2_eco[, c("R2", "n_plots", "sd_ba_loss", "iqr_rdnbr", "mean_cwd", "mean_precip")],
+    use = "complete.obs") |> round(2)
+
+# Scatter panels: R2 vs each candidate predictor, labeled by ecoregion
+library(ggrepel)
+
+r2_long <- r2_eco |>
+  tidyr::pivot_longer(
+    cols      = c(n_plots, sd_ba_loss, iqr_rdnbr, mean_cwd),
+    names_to  = "metric",
+    values_to = "value"
+  ) |>
+  mutate(metric = factor(metric, levels = c("n_plots", "sd_ba_loss", "iqr_rdnbr", "mean_cwd"),
+                         labels = c("N plots", "SD(BA loss)", "IQR(RdNBR)", "Mean CWD (mm/yr)")))
+
+p_r2_drivers <- ggplot(r2_long, aes(x = value, y = R2)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = TRUE, colour = "#0072B2", linewidth = 0.8) +
+  ggrepel::geom_text_repel(aes(label = ecoregion), size = 2.5, max.overlaps = 15) +
+  facet_wrap(~ metric, scales = "free_x") +
+  labs(x = NULL, y = expression(R^2~"(general model, per ecoregion)")) +
+  theme_bw() +
+  theme(strip.text = element_text(size = 9))
+
+p_r2_drivers
+ggsave(paste0(fig_dir, "r2_drivers_ecoregion.png"), p_r2_drivers,
+       width = 9, height = 7, dpi = 300)
+
 cor_vars <- c("rdnbr", "dnir", "northness", "zScorePrecip1")
 var_labels <- c("RdNBR", "dNIR", "Northness", "zPrecip1")
 

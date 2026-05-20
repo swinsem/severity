@@ -130,6 +130,14 @@ ard_df$y         <- ard_xy[, 2]
 v_ard_share      <- vect(ard_df, geom = c("x", "y"), crs = crs(v_ard))
 
 ard_share_path   <- "data/saved/ARD_20250804_share.shp"
-writeVector(v_ard_share, ard_share_path, overwrite = TRUE)
-cat("Shareable ARD shapefile written to:", ard_share_path, "\n")
+#writeVector(v_ard_share, ard_share_path, overwrite = TRUE)
+cat("Shareable ARD written to:", ard_share_path, "\n")
 cat("  Features:", nrow(v_ard_share), "| Fields:", ncol(as.data.frame(v_ard_share)), "\n")
+
+# Save as CSV to keep full attribute names in GEE
+ard_share_csv  <- as.data.frame(v_ard_share)                                   
+ard_crds       <- crds(v_ard_share)                                            
+ard_share_csv$longitude <- ard_crds[, 1]
+ard_share_csv$latitude  <- ard_crds[, 2]                                       
+write.csv(ard_share_csv, "data/saved/ARD_20250804_share.csv", row.names =
+            FALSE)   
