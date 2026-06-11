@@ -4,8 +4,13 @@
 This repo is very much in progress, and I will update this readme as I get it cleaned up.
 Code is written by me (Sara Winsemius) and Mike Koontz, though the paper in review has many coauthors who did not contribute to code development.
 
-Here is an INTERIM script (please use at your own risk, as the paper has not been peer-reviewed yet) for the Google Earth Engine code:
-https://code.earthengine.google.com/c33da377946e0f78c0b8ee0e404f307c
+Here are INTERIM scripts (please use at your own risk, as the paper has not been peer-reviewed yet) for the Google Earth Engine code:
+BA prediction: https://code.earthengine.google.com/a8b8e3f3acd3da281710e679564bb0d3
+To produce inputs for model selection process:
+Climate: https://code.earthengine.google.com/9370f73f681ff4a12c5ba7cbdeaec408
+Spectral: https://code.earthengine.google.com/ed8dab113822344f79464333828bc616
+Topo: https://code.earthengine.google.com/740300557d0b70b9a51d00ae58d0da4b
+Define image seasons: https://code.earthengine.google.com/eadc558e68a30df3222f55083bc3b986
 
 All of the R scripts will be in a sandbox until they are clean enough for others to see, at which point they will be moved to /deploy. Once things are in /deploy, they will have some description added here. 
 
