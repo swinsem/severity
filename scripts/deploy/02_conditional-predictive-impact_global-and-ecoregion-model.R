@@ -1,6 +1,6 @@
 source("./R/utils.R")
 
-cpi_results_version <- "v7.0"
+cpi_results_version <- "v7.1"
 
 # install from patched version which allows custom resamplers
 # See https://github.com/bips-hb/cpi/pull/22
@@ -11,7 +11,7 @@ library(mlr3verse)
 filename <- "20250804"
 
 ard_with_spatial_folds_fname <- here::here(
-  glue::glue("data/ARD_{filename}_with-spatial-folds.csv")
+  glue::glue("data/ARD_{filename}_with-spatial-folds_alternative.csv")
 )
 
 # Read in the analysis-ready data but make sure that the spatial_fold attribute
@@ -39,7 +39,16 @@ target <- "pcnt_ba_mo"
 # The full model formula
 full_rf_formula <- glue::glue("{target} ~ {paste(features, collapse = ' + ')}")
 
+plot_count <- ard |> 
+  dplyr::group_by(domain) |> 
+  dplyr::tally()
+
+ecoregions_to_process <- plot_count |> 
+  dplyr::filter(n > 300) |> 
+  dplyr::filter(domain != "western-us")
+
 ard_nested <- ard |> 
+  dplyr::filter(domain %in% ecoregions_to_process$domain) |> 
   tidyr::nest(.by = "domain", .key = "ard")
 
 # All possible hyperparameters and input data

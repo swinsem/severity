@@ -4,10 +4,11 @@ library(stringr)
 library(ggcorrplot)
 library(terra)
 library(glue)
+library(sf)
 
 source("./R/utils.R")
 
-data_dir <- "research/severity/data/"
+data_dir <- "data/"
 
 # use the same name at the end of spectral_, climate_, and topo_ in GEE
 filename <- "20250804"
@@ -81,16 +82,16 @@ ardcoords$ecoregion <- biome_info$ECO_NAME
 ardnc <- as.data.frame(ardcoords)
 
 # save ARD
-writeVector(ardcoords, paste0(data_dir, "saved/ARD_", filename, ".gpkg"))
+writeVector(ardcoords, paste0(data_dir, "saved/ARD_", filename, ".gpkg"), overwrite=TRUE)
 
-write.csv(ard, paste0(data_dir, "saved/ARD_", filename, ".csv"), row.names = FALSE)
+write.csv(ardnc, paste0(data_dir, "saved/ARD_", filename, ".csv"), row.names = FALSE)
 
 # Spatially fold ARD
 set.seed(20250121)
 
 # Read the ARD data
 # https://spatialsample.tidymodels.org/articles/spatialsample.html
-ard <- sf::st_read(paste0(data_dir, "saved/ARD_", filename, ".csv")) |>
+ard <- sf::st_read(paste0(data_dir, "saved/ARD_", filename, ".gpkg")) |>
   dplyr::filter(!is.na(pcnt_ba_mo)) 
 
 # Create the 10 spatial folds of the full dataset
@@ -107,11 +108,14 @@ ard_with_spatial_folds_global <- list(ard_with_spatial_folds_global) |>
   setNames("western-us")
 
 # Next set up ecoregion specific models
-ecoregions_to_model <- ard |> 
+ecoregions_with_plot_count <- ard |> 
   sf::st_drop_geometry() |> 
   dplyr::group_by(ecoregion) |> 
   dplyr::summarize(n = dplyr::n()) |> 
   dplyr::filter(n >= 10) |> 
+  dplyr::mutate(v = ifelse(n > 300, yes = 10, no = 5))
+
+ecoregions_to_model <- ecoregions_with_plot_count |> 
   dplyr::pull(ecoregion)
 
 # Doing the grouping in a separate step lets us preserve the group names
@@ -124,14 +128,23 @@ ard_for_task_by_ecoregion_grouped <- ard |>
 # ecoregions otherwise the folds will be too sparse. They are arguably too
 # sparse even at 5 folds given that some of those folds within ecoregions
 # have no variation in observed basal area loss
-ard_for_task_by_ecoregion <- ard_for_task_by_ecoregion_grouped |> 
+ard_for_task_by_ecoregion_list <- ard_for_task_by_ecoregion_grouped |> 
   dplyr::group_split() |> 
-  purrr::map(
-    .f = spatialsample::spatial_clustering_cv, 
-    v = 5, 
-    .progress = TRUE
-  ) |> 
   setNames(dplyr::group_keys(ard_for_task_by_ecoregion_grouped)$ecoregion)
+
+ard_for_task_by_ecoregion_list <- tibble::tibble(
+  ecoregion = dplyr::group_keys(ard_for_task_by_ecoregion_grouped)$ecoregion,
+  ard_for_task_by_ecoregion = ard_for_task_by_ecoregion_list
+) |> 
+  dplyr::left_join(ecoregions_with_plot_count)
+
+ard_for_task_by_ecoregion <- purrr::map2(
+  .x = ard_for_task_by_ecoregion_list$ard_for_task_by_ecoregion,
+  .y = ard_for_task_by_ecoregion_list$v,
+  .f = spatialsample::spatial_clustering_cv, 
+  .progress = TRUE
+) |> 
+  setNames(ard_for_task_by_ecoregion_list$ecoregion)
 
 ard_with_spatial_folds_by_ecoregion <- ard_for_task_by_ecoregion |>
   purrr::map(
